@@ -1,6 +1,6 @@
 {
   "name": "@jamesvclements/before-and-after",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Simple before/after screenshot tool for capturing and comparing web pages",
   "author": "James Clements",
   "license": "PolyForm-Shield-1.0.0",
