@@ -19,6 +19,21 @@ allowed-tools:
 
 Simple before/after screenshot capture powered by the `before-and-after` package.
 
+## IMPORTANT: Agent Behavior Rules
+
+**DO NOT:**
+- Switch git branches
+- Stash changes
+- Start additional dev servers
+- Make assumptions about what the "before" state is
+
+**DO:**
+- Assume the current state (current branch, current dev server) is the **After**
+- If the user provides only one URL or no URLs, **ASK** for the before URL
+- If the user mentions "PR screenshots" or similar without URLs, ask: "What URL should I use for the 'before' state? This could be a production URL, a preview deployment, or another local port."
+
+The agent should never modify git state or spin up infrastructure. It only captures screenshots from URLs the user provides.
+
 ## Capabilities
 
 - **Screenshot capture** from any URL (file://, http://, https://)

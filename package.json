@@ -1,6 +1,6 @@
 {
   "name": "@jamesvclements/before-and-after",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Simple before/after screenshot tool for capturing and comparing web pages",
   "author": "James Clements",
   "license": "PolyForm-Shield-1.0.0",
@@ -8,7 +8,7 @@
     "type": "git",
     "url": "git+https://github.com/jamesvclements/before-and-after.git"
   },
-  "homepage": "https://github.com/jamesvclements/before-and-after#readme",
+  "homepage": "https://jm.sv/before-and-after",
   "bugs": {
     "url": "https://github.com/jamesvclements/before-and-after/issues"
   },
