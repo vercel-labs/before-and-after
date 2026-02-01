@@ -34,7 +34,7 @@ export default function Page() {
                 Options
               </a>
               <a
-                href="https://github.com/jamesvclements/before-and-after"
+                href="https://github.com/vercel-labs/before-and-after"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="GitHub"
@@ -72,7 +72,7 @@ export default function Page() {
           <section id="install" className="scroll-mt-8 space-y-3">
             <h2 className="text-neutral-800">Install</h2>
             <p className="text-sm">Install globally to use from anywhere</p>
-            <Code>npm i -g @jamesvclements/before-and-after</Code>
+            <Code>npm i -g @vercel/before-and-after</Code>
           </section>
 
           <section className="space-y-3">
@@ -93,7 +93,7 @@ export default function Page() {
               detect the associated PR with your branch and (soon) <code className="text-neutral-800 bg-neutral-50 px-1 sm:px-1.5 py-0.5 rounded font-mono text-[12px] sm:text-[14px]">vercel</code> to
               bypass deployment protection when capturing from Vercel preview branches
             </p>
-            <Code>npx skills add jamesvclements/before-and-after</Code>
+            <Code>npx skills add vercel-labs/before-and-after</Code>
           </section>
 
           <hr className="border-neutral-100" />
@@ -172,8 +172,8 @@ export default function Page() {
         </div>
 
         {/* Footer */}
-        <footer className="max-w-[540px] mx-auto px-4 sm:px-6 mt-10 sm:mt-16 pt-6 sm:pt-8 border-t border-neutral-200">
-          <p className="text-sm text-neutral-500 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 text-center">
+        <footer className="max-w-[540px] mx-auto mt-10 sm:mt-16 pt-6 sm:pt-8 border-t border-neutral-100">
+          <p className="text-sm text-neutral-500 flex items-center justify-between w-full">
             <span className="inline-flex items-center gap-1.5">
               Made by{" "}
               <a
@@ -189,20 +189,18 @@ export default function Page() {
                   height={14}
                   className="w-3.5 h-3.5 rounded-full"
                 />
-                James
+                James Clements
               </a>
             </span>
-            <span className="inline-flex items-center gap-1.5 flex-wrap justify-center">
-              <span className="hidden sm:inline">.</span>
-              <span className="sm:hidden">Zero-dependency except</span>
-              <span className="hidden sm:inline">Zero-dependency except one on</span>{" "}
+            <span>
+              Uses{" "}
               <a
-                href="https://agent-browser.dev"
+                href="https://agentbrowser.dev"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-neutral-800 bg-neutral-50 px-1.5 py-0.5 rounded font-mono text-[12px] sm:text-[14px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 whitespace-nowrap"
+                className="text-neutral-800 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 rounded-sm"
               >
-                agent-browser <span className="text-[9px]">▲</span>
+                agent-browser <span className="text-[9px] relative -top-px">▲</span>
               </a>
             </span>
           </p>

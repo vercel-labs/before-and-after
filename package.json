@@ -1,16 +1,16 @@
 {
-  "name": "@jamesvclements/before-and-after",
+  "name": "@vercel/before-and-after",
   "version": "0.0.4",
   "description": "Simple before/after screenshot tool for capturing and comparing web pages",
   "author": "James Clements",
   "license": "PolyForm-Shield-1.0.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jamesvclements/before-and-after.git"
+    "url": "git+https://github.com/vercel-labs/before-and-after.git"
   },
   "homepage": "https://jm.sv/before-and-after",
   "bugs": {
-    "url": "https://github.com/jamesvclements/before-and-after/issues"
+    "url": "https://github.com/vercel-labs/before-and-after/issues"
   },
   "keywords": [
     "screenshot",

@@ -2,10 +2,10 @@
 name: before-and-after
 description: Captures before/after screenshots of web pages or elements for visual comparison. Use when user says "take before and after", "screenshot comparison", "visual diff", "PR screenshots", "compare old and new", or needs to document UI changes. Accepts two URLs (file://, http://, https://) or two image paths.
 allowed-tools:
-  - Bash(npx @jamesvclements/before-and-after *)
+  - Bash(npx @vercel/before-and-after *)
   - Bash(before-and-after *)
   - Bash(which before-and-after)
-  - Bash(npm install -g @jamesvclements/before-and-after)
+  - Bash(npm install -g @vercel/before-and-after)
   - Bash(*/upload-and-copy.sh *)
   - Bash(curl -s -o /dev/null -w *)
   - Bash(gh pr view *)
@@ -18,7 +18,7 @@ allowed-tools:
 
 # Before-After Screenshot Skill
 
-> **Package:** `@jamesvclements/before-and-after`
+> **Package:** `@vercel/before-and-after`
 > Never use `before-and-after` (wrong package).
 
 ## Agent Behavior Rules
@@ -35,7 +35,7 @@ allowed-tools:
 
 ## Execution Order (MUST follow)
 
-1. **Pre-flight** — `which before-and-after || npm install -g @jamesvclements/before-and-after`
+1. **Pre-flight** — `which before-and-after || npm install -g @vercel/before-and-after`
 2. **Protection check** — if `.vercel.app` URL: `curl -s -o /dev/null -w "%{http_code}" "<url>"` (401/403 = protected)
 3. **Capture** — `before-and-after "<before-url>" "<after-url>"`
 4. **Upload** — `./scripts/upload-and-copy.sh <before.png> <after.png> --markdown`
@@ -64,7 +64,7 @@ before-and-after url1 url2 --full      # full scroll
 before-and-after before.png after.png --markdown
 
 # Via npx (use full package name!)
-npx @jamesvclements/before-and-after url1 url2
+npx @vercel/before-and-after url1 url2
 ```
 
 | Flag | Description |
@@ -118,7 +118,7 @@ If no `gh` CLI: output markdown and tell user to paste manually.
 
 | Error | Fix |
 |-------|-----|
-| `command not found` | `npm install -g @jamesvclements/before-and-after` |
-| `could not determine executable` | Use `npx @jamesvclements/before-and-after` (full name) |
+| `command not found` | `npm install -g @vercel/before-and-after` |
+| `could not determine executable` | Use `npx @vercel/before-and-after` (full name) |
 | 401/403 on .vercel.app | See Vercel protection section |
 | Element not found | Verify selector exists on page |

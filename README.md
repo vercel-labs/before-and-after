@@ -9,7 +9,7 @@ Before and after is a tool that adds before and after screenshots to your PRs. A
 Install globally to use from anywhere:
 
 ```bash
-npm i -g @jamesvclements/before-and-after
+npm i -g @vercel/before-and-after
 ```
 
 ## Basic Use
@@ -25,7 +25,7 @@ before-and-after site.com localhost:3000
 Show your agent how and when to take before and afters. The skill uses `gh` to detect the associated PR with your branch and (soon) `vercel` to bypass deployment protection when capturing from Vercel preview branches.
 
 ```bash
-npx skills add jamesvclements/before-and-after
+npx skills add vercel-labs/before-and-after
 ```
 
 ## Options
