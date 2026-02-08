@@ -28,3 +28,9 @@ tests/fixtures/apps/*/next-env.d.ts
 site/.next/
 site/node_modules/
 .vercel
+
+# Local content (Remotion videos, etc.)
+content/
+
+# Local notes
+GITHUB_VIDEO_UPLOAD.md

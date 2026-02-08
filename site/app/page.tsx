@@ -4,12 +4,15 @@ import { Logo } from "@/components/logo";
 
 export default function Page() {
   return (
-    <div className="min-h-screen bg-white text-neutral-500">
+    <div className="min-h-screen bg-[#F3F3F3] text-neutral-500">
       <main className="py-10 sm:py-16">
         {/* Header - constrained width */}
         <div className="max-w-[540px] mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between mb-4">
-            <a href="/before-and-after" className="text-neutral-800 hover:text-neutral-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 rounded-sm">
+            <a
+              href="/before-and-after"
+              className="text-neutral-800 hover:text-neutral-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 rounded-sm"
+            >
               <h1>
                 <Logo />
               </h1>
@@ -89,9 +92,16 @@ export default function Page() {
             <h2 className="text-neutral-800">Add Skill</h2>
             <p className="text-sm">
               Show your agent how and when to take before and afters. The skill
-              uses <code className="text-neutral-800 bg-neutral-50 px-1 sm:px-1.5 py-0.5 rounded font-mono text-[12px] sm:text-[14px]">gh</code> to
-              detect the associated PR with your branch and (soon) <code className="text-neutral-800 bg-neutral-50 px-1 sm:px-1.5 py-0.5 rounded font-mono text-[12px] sm:text-[14px]">vercel</code> to
-              bypass deployment protection when capturing from Vercel preview branches
+              uses{" "}
+              <code className="text-neutral-800 bg-neutral-50 px-1 sm:px-1.5 py-0.5 rounded font-mono text-[12px] sm:text-[14px]">
+                gh
+              </code>{" "}
+              to detect the associated PR with your branch and (soon){" "}
+              <code className="text-neutral-800 bg-neutral-50 px-1 sm:px-1.5 py-0.5 rounded font-mono text-[12px] sm:text-[14px]">
+                vercel
+              </code>{" "}
+              to bypass deployment protection when capturing from Vercel preview
+              branches
             </p>
             <Code>npx skills add vercel-labs/before-and-after</Code>
           </section>
@@ -162,18 +172,24 @@ export default function Page() {
               <Code>before-and-after url1 url2 --upload my-s3-uploader</Code>
               <p className="text-sm mt-3">
                 By default, images are uploaded to{" "}
-                <a href="https://0x0.st" target="_blank" rel="noopener noreferrer" className="text-neutral-800 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 rounded-sm">
+                <a
+                  href="https://0x0.st"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-neutral-800 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 rounded-sm"
+                >
                   0x0.st
                 </a>
-                . For heavy usage or sensitive captures, use your own upload handler.
+                . For heavy usage or sensitive captures, use your own upload
+                handler.
               </p>
             </div>
           </section>
         </div>
 
         {/* Footer */}
-        <footer className="max-w-[540px] mx-auto mt-10 sm:mt-16 pt-6 sm:pt-8 border-t border-neutral-100">
-          <p className="text-sm text-neutral-500 flex items-center justify-between w-full">
+        <footer className="max-w-[540px] mx-auto px-4 sm:px-6 mt-10 sm:mt-16 pt-6 sm:pt-8 border-t border-neutral-100">
+          <p className="text-sm text-neutral-500 flex flex-col items-center gap-2 sm:flex-row sm:justify-between w-full">
             <span className="inline-flex items-center gap-1.5">
               Made by{" "}
               <a
@@ -200,7 +216,8 @@ export default function Page() {
                 rel="noopener noreferrer"
                 className="text-neutral-800 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 rounded-sm"
               >
-                agent-browser <span className="text-[9px] relative -top-px">▲</span>
+                agent-browser{" "}
+                <span className="text-[9px] relative -top-px">▲</span>
               </a>
             </span>
           </p>

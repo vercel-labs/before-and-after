@@ -131,3 +131,10 @@ cd site && pnpm dev
 - Screenshots saved to `~/Downloads/` with `YYYYMMDD-HHMMSS-` prefix
 - PR markdown uses centered alignment (`|:------:|`) for GitHub compatibility
 - Adapters are standalone bash scripts with no dependencies beyond curl/gh
+
+## Agentation Watch Mode
+
+When the user says "watch mode", start a loop with `agentation_watch_annotations`:
+- Call `agentation_watch_annotations` and wait for annotations.
+- For each annotation: `agentation_acknowledge`, make the fix, then `agentation_resolve` with a short summary.
+- Continue watching until the user says stop or a timeout is reached.

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "agentation": {
+      "command": "agentation-mcp",
+      "args": ["server"]
+    }
+  }
+}
