@@ -1,22 +1,14 @@
 /**
- * Browser automation via agent-browser CLI.
- * Requires agent-browser to be installed globally.
+ * Browser automation via Playwright.
+ * Launches headless Chromium for screenshot capture.
  */
 
-import { execSync } from 'child_process';
+import { chromium, Browser, Page } from 'playwright';
 import { ViewportSize } from './types.js';
 import fs from 'fs';
-import path from 'path';
-import os from 'os';
 
-function exec(cmd: string): string {
-  try {
-    return execSync(cmd, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
-  } catch (error) {
-    const err = error as { stderr?: string; message?: string };
-    throw new Error(err.stderr || err.message || 'Command failed');
-  }
-}
+let browser: Browser | null = null;
+let page: Page | null = null;
 
 export interface ScreenshotOptions {
   viewport: ViewportSize;
@@ -25,51 +17,80 @@ export interface ScreenshotOptions {
 }
 
 /**
- * Capture a screenshot using agent-browser CLI.
+ * Get or create a Playwright page with the given viewport.
+ * Reuses the browser instance across calls for performance.
+ */
+async function getPage(viewport: ViewportSize): Promise<Page> {
+  if (!browser) {
+    browser = await chromium.launch({ headless: true });
+  }
+  if (!page) {
+    page = await browser.newPage({
+      viewport,
+      deviceScaleFactor: 2,
+    });
+  } else {
+    await page.setViewportSize(viewport);
+  }
+  return page;
+}
+
+/**
+ * Capture a screenshot using Playwright.
  * Returns the screenshot as a Buffer.
  */
 export async function captureScreenshot(
   url: string,
   options: ScreenshotOptions
 ): Promise<Buffer> {
-  // Set viewport
-  exec(`agent-browser set viewport ${options.viewport.width} ${options.viewport.height}`);
+  const pg = await getPage(options.viewport);
 
-  // Navigate to URL
-  exec(`agent-browser open "${url}"`);
+  // Disable animations and transitions for consistent captures
+  await pg.addStyleTag({
+    content: '*, *::before, *::after { animation-duration: 0s !important; transition-duration: 0s !important; }',
+  });
 
-  // Wait for page to settle (fonts, JS rendering)
-  exec('agent-browser wait 500');
+  await pg.goto(url, { waitUntil: 'networkidle' });
+
+  // Wait for web fonts to finish loading
+  await pg.evaluate(() => document.fonts.ready);
 
   // If selector specified, scroll it into view
   if (options.selector) {
-    try {
-      exec(`agent-browser scrollintoview "${options.selector}"`);
-      exec('agent-browser wait 200');
-    } catch {
+    const locator = pg.locator(options.selector);
+    const count = await locator.count();
+    if (count === 0) {
       throw new Error(`Element not found: ${options.selector}`);
     }
+    await locator.first().scrollIntoViewIfNeeded();
+    await pg.waitForTimeout(200);
   }
 
-  // Take screenshot to temp file
-  const tempFile = path.join(os.tmpdir(), `screenshot-${Date.now()}.png`);
-  const fullFlag = options.fullPage ? '--full' : '';
-  exec(`agent-browser screenshot ${fullFlag} "${tempFile}"`);
-
-  // Read and return buffer
-  const buffer = fs.readFileSync(tempFile);
-  fs.unlinkSync(tempFile);
-
-  return buffer;
+  const screenshot = await pg.screenshot({ fullPage: options.fullPage ?? false });
+  return Buffer.from(screenshot);
 }
 
 /**
- * Close the browser session.
+ * Close the browser session and clean up resources.
  */
-export function closeBrowser(): void {
-  try {
-    exec('agent-browser close');
-  } catch {
-    // Ignore errors if browser wasn't open
+export async function closeBrowser(): Promise<void> {
+  if (page) {
+    await page.close();
+    page = null;
   }
+  if (browser) {
+    await browser.close();
+    browser = null;
+  }
+}
+
+/**
+ * Read a pre-captured screenshot from disk.
+ * Used in MCP mode where Playwright MCP saves files directly.
+ */
+export function readScreenshot(filepath: string): Buffer {
+  if (!fs.existsSync(filepath)) {
+    throw new Error(`Screenshot not found: ${filepath}`);
+  }
+  return fs.readFileSync(filepath);
 }

@@ -1,16 +1,16 @@
 {
-  "name": "@vercel/before-and-after",
-  "version": "0.0.4",
-  "description": "Simple before/after screenshot tool for capturing and comparing web pages",
-  "author": "James Clements",
+  "name": "pre-post",
+  "version": "0.1.0",
+  "description": "Visual diff tool for PRs — captures before/after screenshots of web pages",
+  "author": "Juan Gabriel Delgado (forked from James Clements)",
   "license": "PolyForm-Shield-1.0.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vercel-labs/before-and-after.git"
+    "url": "git+https://github.com/juangadm/pre-post.git"
   },
-  "homepage": "https://jm.sv/before-and-after",
+  "homepage": "https://github.com/juangadm/pre-post",
   "bugs": {
-    "url": "https://github.com/vercel-labs/before-and-after/issues"
+    "url": "https://github.com/juangadm/pre-post/issues"
   },
   "keywords": [
     "screenshot",
@@ -20,13 +20,15 @@
     "capture",
     "web",
     "testing",
-    "cli"
+    "cli",
+    "playwright",
+    "pr-screenshots"
   ],
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "before-and-after": "dist/bin/cli.js"
+    "pre-post": "dist/bin/cli.js"
   },
   "exports": {
     ".": {
@@ -47,8 +49,8 @@
     "test:browser": "vitest run tests/browser",
     "test:integration": "vitest run tests/integration"
   },
-  "peerDependencies": {
-    "agent-browser": "*"
+  "dependencies": {
+    "playwright": "^1.50.0"
   },
   "devDependencies": {
     "@types/node": "^22",
