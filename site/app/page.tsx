@@ -10,7 +10,7 @@ export default function Page() {
         <div className="max-w-[540px] mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between mb-4">
             <a
-              href="/before-and-after"
+              href="/pre-post"
               className="text-neutral-800 hover:text-neutral-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 rounded-sm"
             >
               <h1>
@@ -37,7 +37,7 @@ export default function Page() {
                 Options
               </a>
               <a
-                href="https://github.com/vercel-labs/before-and-after"
+                href="https://github.com/juangadm/pre-post"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="GitHub"
@@ -59,9 +59,9 @@ export default function Page() {
             </nav>
           </div>
           <p className="mb-8 sm:mb-12 text-[14px] sm:text-[15px]">
-            Before and after is a tool that adds before and after screenshots to
-            your PRs. Add it as a skill for your agent to call automatically or
-            use it directly from the command line.
+            Pre-post is the fastest path from code change to visual PR
+            documentation. Add it as a skill for Claude Code to call
+            automatically, or use it directly from the command line.
           </p>
         </div>
 
@@ -75,15 +75,29 @@ export default function Page() {
           <section id="install" className="scroll-mt-8 space-y-3">
             <h2 className="text-neutral-800">Install</h2>
             <p className="text-sm">Install globally to use from anywhere</p>
-            <Code>npm i -g @vercel/before-and-after</Code>
+            <Code>npm i -g pre-post</Code>
           </section>
 
           <section className="space-y-3">
             <h2 className="text-neutral-800">Basic Use</h2>
             <p className="text-sm">
-              Capture any two URLs, protocol is optional
+              Use the <code className="text-neutral-800 bg-neutral-50 px-1 sm:px-1.5 py-0.5 rounded font-mono text-[12px] sm:text-[14px]">/pre-post</code> skill
+              in Claude Code to automatically detect routes, capture
+              before/after screenshots, and post them to your PR
             </p>
-            <Code>before-and-after site.com localhost:3000</Code>
+            <Code>pre-post site.com localhost:3000</Code>
+          </section>
+
+          <hr className="border-neutral-100" />
+
+          <section className="space-y-3">
+            <h2 className="text-neutral-800">Route Detection</h2>
+            <p className="text-sm">
+              Automatically detect which routes are affected by your changes
+              using git diff analysis
+            </p>
+            <Code>pre-post detect</Code>
+            <Code>pre-post run --before-base https://prod.com --after-base http://localhost:3000</Code>
           </section>
 
           <hr className="border-neutral-100" />
@@ -91,19 +105,18 @@ export default function Page() {
           <section id="skill" className="scroll-mt-8 space-y-3">
             <h2 className="text-neutral-800">Add Skill</h2>
             <p className="text-sm">
-              Show your agent how and when to take before and afters. The skill
+              Show Claude Code how and when to take before and afters. The skill
               uses{" "}
               <code className="text-neutral-800 bg-neutral-50 px-1 sm:px-1.5 py-0.5 rounded font-mono text-[12px] sm:text-[14px]">
                 gh
               </code>{" "}
-              to detect the associated PR with your branch and (soon){" "}
+              to detect the associated PR with your branch and{" "}
               <code className="text-neutral-800 bg-neutral-50 px-1 sm:px-1.5 py-0.5 rounded font-mono text-[12px] sm:text-[14px]">
-                vercel
+                Playwright
               </code>{" "}
-              to bypass deployment protection when capturing from Vercel preview
-              branches
+              for browser automation
             </p>
-            <Code>npx skills add vercel-labs/before-and-after</Code>
+            <Code>npx skills add juangadm/pre-post</Code>
           </section>
 
           <hr className="border-neutral-100" />
@@ -113,9 +126,23 @@ export default function Page() {
 
             <div className="space-y-2">
               <p className="text-sm">
+                Capture responsive screenshots (desktop + mobile)
+              </p>
+              <Code>pre-post compare --before-base url1 --after-base url2 --responsive</Code>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm">
+                Compare specific routes
+              </p>
+              <Code>pre-post compare --before-base url1 --after-base url2 --routes /dashboard,/settings</Code>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm">
                 Capture a specific element using a CSS selector
               </p>
-              <Code>before-and-after url1 url2 &quot;.hero&quot;</Code>
+              <Code>pre-post url1 url2 &quot;.hero&quot;</Code>
             </div>
 
             <div className="space-y-2">
@@ -123,53 +150,48 @@ export default function Page() {
                 Use different selectors for before and after
               </p>
               <Code>
-                before-and-after url1 url2 &quot;.old&quot; &quot;.new&quot;
+                pre-post url1 url2 &quot;.old&quot; &quot;.new&quot;
               </Code>
             </div>
 
             <div className="space-y-2">
               <p className="text-sm">
-                Capture at mobile (375×812), tablet (768×1024), or custom
+                Capture at mobile (375x812), tablet (768x1024), or custom
                 viewport
               </p>
-              <Code>before-and-after url1 url2 --mobile</Code>
-              <Code>before-and-after url1 url2 --size 1920x1080</Code>
+              <Code>pre-post url1 url2 --mobile</Code>
+              <Code>pre-post url1 url2 --size 1920x1080</Code>
             </div>
 
             <div className="space-y-2">
               <p className="text-sm">Capture the entire scrollable page</p>
-              <Code>before-and-after url1 url2 --full</Code>
+              <Code>pre-post url1 url2 --full</Code>
             </div>
 
             <div className="space-y-2">
               <p className="text-sm">
                 Output a markdown table for PR descriptions
               </p>
-              <Code>before-and-after url1 url2 --markdown</Code>
+              <Code>pre-post url1 url2 --markdown</Code>
             </div>
 
             <div className="space-y-2">
               <p className="text-sm">
                 Use existing images instead of capturing URLs
               </p>
-              <Code>before-and-after before.png after.png</Code>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-sm">Mix URLs and images</p>
-              <Code>before-and-after before.png localhost:3000</Code>
+              <Code>pre-post before.png after.png</Code>
             </div>
 
             <div className="space-y-2">
               <p className="text-sm">Save to a custom location</p>
-              <Code>before-and-after url1 url2 --output ./screenshots</Code>
+              <Code>pre-post url1 url2 --output ./screenshots</Code>
             </div>
 
             <div className="space-y-2">
               <p className="text-sm">
                 Upload to a custom image storage service
               </p>
-              <Code>before-and-after url1 url2 --upload my-s3-uploader</Code>
+              <Code>pre-post url1 url2 --upload-url my-s3-endpoint</Code>
               <p className="text-sm mt-3">
                 By default, images are uploaded to{" "}
                 <a
@@ -191,7 +213,16 @@ export default function Page() {
         <footer className="max-w-[540px] mx-auto px-4 sm:px-6 mt-10 sm:mt-16 pt-6 sm:pt-8 border-t border-neutral-100">
           <p className="text-sm text-neutral-500 flex flex-col items-center gap-2 sm:flex-row sm:justify-between w-full">
             <span className="inline-flex items-center gap-1.5">
-              Made by{" "}
+              Forked from{" "}
+              <a
+                href="https://github.com/vercel-labs/before-and-after"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-neutral-800 hover:underline inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 rounded-sm"
+              >
+                before-and-after
+              </a>
+              {" "}by{" "}
               <a
                 href="https://x.com/jamesvclements"
                 target="_blank"
@@ -211,13 +242,12 @@ export default function Page() {
             <span>
               Uses{" "}
               <a
-                href="https://agentbrowser.dev"
+                href="https://playwright.dev"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-neutral-800 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 rounded-sm"
               >
-                agent-browser{" "}
-                <span className="text-[9px] relative -top-px">▲</span>
+                Playwright
               </a>
             </span>
           </p>

@@ -2,7 +2,6 @@ import React from "react"
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import localFont from "next/font/local"
-import { Agentation } from "agentation"
 
 import "./globals.css"
 
@@ -22,24 +21,24 @@ const vanillaCream = localFont({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://jm.sv"),
+  metadataBase: new URL("https://github.com/juangadm/pre-post"),
   alternates: {
-    canonical: "/before-and-after",
+    canonical: "/",
   },
-  title: "before-and-after",
-  description: "Add before and after screenshots to your PRs. Install as a skill for your AI agent or use directly from the CLI.",
+  title: "pre-post",
+  description: "Visual diff tool for PRs — captures before/after screenshots of web pages. Use as a Claude Code skill or from the CLI.",
   openGraph: {
-    title: "before-and-after",
-    description: "Add before and after screenshots to your PRs. Install as a skill for your AI agent or use directly from the CLI.",
+    title: "pre-post",
+    description: "Visual diff tool for PRs — captures before/after screenshots of web pages. Use as a Claude Code skill or from the CLI.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "before-and-after",
-    description: "Add before and after screenshots to your PRs. Install as a skill for your AI agent or use directly from the CLI.",
+    title: "pre-post",
+    description: "Visual diff tool for PRs — captures before/after screenshots of web pages. Use as a Claude Code skill or from the CLI.",
   },
   icons: {
-    icon: "/before-and-after/icon",
+    icon: "/pre-post/icon",
   },
 }
 
@@ -52,7 +51,6 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geist.variable} ${geistMono.variable} ${vanillaCream.variable} font-sans antialiased`}>
         {children}
-        {process.env.NODE_ENV === "development" && <Agentation endpoint="http://localhost:4747" />}
       </body>
     </html>
   )

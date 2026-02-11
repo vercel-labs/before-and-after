@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, beforeAll } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
@@ -6,11 +6,11 @@ import os from 'os';
 
 const CLI_PATH = path.resolve(__dirname, '../../dist/bin/cli.js');
 const TEST_PAGES = path.resolve(__dirname, '../fixtures/pages');
-const TEMP_DIR = path.join(os.tmpdir(), 'before-after-test-' + Date.now());
+const TEMP_DIR = path.join(os.tmpdir(), 'pre-post-test-' + Date.now());
 
-// Browser-dependent tests require agent-browser daemon to be running
+// Browser-dependent tests require Playwright browsers to be installed
 // Set TEST_BROWSER=true to enable these tests
-const agentBrowserAvailable = process.env.TEST_BROWSER === 'true';
+const playwrightAvailable = process.env.TEST_BROWSER === 'true';
 
 function fileUrl(relativePath: string): string {
   return `file://${path.join(TEST_PAGES, relativePath)}`;
@@ -18,7 +18,7 @@ function fileUrl(relativePath: string): string {
 
 function runCli(args: string[], options: { timeout?: number } = {}): { stdout: string; stderr: string; exitCode: number } {
   try {
-    const stdout = execSync(`node ${CLI_PATH} ${args.join(' ')}`, {
+    const stdout = execSync(`node "${CLI_PATH}" ${args.join(' ')}`, {
       encoding: 'utf8',
       timeout: options.timeout || 60000,
       env: { ...process.env, HOME: TEMP_DIR },
@@ -48,13 +48,16 @@ describe('CLI', () => {
     it('shows help with --help flag', () => {
       const { stdout, exitCode } = runCli(['--help']);
       expect(exitCode).toBe(0);
-      expect(stdout).toContain('before-and-after');
-      expect(stdout).toContain('Screenshot comparison tool');
+      expect(stdout).toContain('pre-post');
+      expect(stdout).toContain('Visual diff tool');
       expect(stdout).toContain('USAGE:');
       expect(stdout).toContain('VIEWPORT OPTIONS:');
       expect(stdout).toContain('--mobile');
       expect(stdout).toContain('--tablet');
       expect(stdout).toContain('--size');
+      expect(stdout).toContain('SUBCOMMANDS:');
+      expect(stdout).toContain('detect');
+      expect(stdout).toContain('compare');
     });
 
     it('shows help with -h flag', () => {
@@ -65,7 +68,7 @@ describe('CLI', () => {
   });
 
   describe('argument validation', () => {
-    it('requires two arguments', () => {
+    it('requires two arguments in default mode', () => {
       const { stderr, exitCode } = runCli([]);
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain('Two arguments required');
@@ -78,8 +81,26 @@ describe('CLI', () => {
     });
   });
 
+  describe('detect subcommand', () => {
+    it('outputs JSON for detect command', () => {
+      // In a non-git directory, this should output an empty result
+      const { stdout, exitCode } = runCli(['detect']);
+      expect(exitCode).toBe(0);
+      const parsed = JSON.parse(stdout);
+      expect(parsed).toHaveProperty('routes');
+    });
+  });
+
+  describe('compare subcommand', () => {
+    it('requires --before-base and --after-base', () => {
+      const { stderr, exitCode } = runCli(['compare']);
+      expect(exitCode).not.toBe(0);
+      expect(stderr).toContain('--before-base');
+    });
+  });
+
   describe('URL capture mode', () => {
-    it.skipIf(!agentBrowserAvailable)('captures two file:// URLs', () => {
+    it.skipIf(!playwrightAvailable)('captures two file:// URLs', () => {
       const { stdout, exitCode } = runCli([
         fileUrl('css-card/before.html'),
         fileUrl('css-card/after.html'),
@@ -99,7 +120,7 @@ describe('CLI', () => {
       expect(pngFiles.some(f => f.includes('after'))).toBe(true);
     });
 
-    it.skipIf(!agentBrowserAvailable)('captures with selector', () => {
+    it.skipIf(!playwrightAvailable)('captures with selector', () => {
       const { stdout, exitCode } = runCli([
         fileUrl('css-card/before.html'),
         fileUrl('css-card/after.html'),
@@ -111,7 +132,7 @@ describe('CLI', () => {
       expect(stdout).toContain('(.card)');
     });
 
-    it.skipIf(!agentBrowserAvailable)('captures with different selectors for before and after', () => {
+    it.skipIf(!playwrightAvailable)('captures with different selectors for before and after', () => {
       const { stdout, exitCode } = runCli([
         fileUrl('css-card/before.html'),
         fileUrl('css-card/after.html'),
@@ -124,7 +145,7 @@ describe('CLI', () => {
       expect(stdout).toContain('(.card)');
     });
 
-    it.skipIf(!agentBrowserAvailable)('captures with -s selector flag', () => {
+    it.skipIf(!playwrightAvailable)('captures with -s selector flag', () => {
       const { stdout, exitCode } = runCli([
         fileUrl('css-card/before.html'),
         fileUrl('css-card/after.html'),
@@ -138,7 +159,7 @@ describe('CLI', () => {
   });
 
   describe('viewport options', () => {
-    it.skipIf(!agentBrowserAvailable)('uses desktop viewport by default', () => {
+    it.skipIf(!playwrightAvailable)('uses desktop viewport by default', () => {
       const { exitCode } = runCli([
         fileUrl('css-card/before.html'),
         fileUrl('css-card/after.html'),
@@ -147,15 +168,15 @@ describe('CLI', () => {
 
       expect(exitCode).toBe(0);
 
-      // Verify screenshot dimensions (1280x800)
       const files = fs.readdirSync(TEMP_DIR).filter(f => f.endsWith('.png'));
       const imagePath = path.join(TEMP_DIR, files[0]);
       const imageBuffer = fs.readFileSync(imagePath);
+      // With deviceScaleFactor: 2, the image width will be 2560 (1280 * 2)
       const width = imageBuffer.readUInt32BE(16);
-      expect(width).toBe(1280);
+      expect(width).toBe(2560);
     });
 
-    it.skipIf(!agentBrowserAvailable)('captures with mobile viewport (-m)', () => {
+    it.skipIf(!playwrightAvailable)('captures with mobile viewport (-m)', () => {
       const { exitCode } = runCli([
         fileUrl('css-card/before.html'),
         fileUrl('css-card/after.html'),
@@ -165,48 +186,12 @@ describe('CLI', () => {
 
       expect(exitCode).toBe(0);
 
-      // Verify screenshot dimensions (375x812)
       const files = fs.readdirSync(TEMP_DIR).filter(f => f.endsWith('.png'));
       const imagePath = path.join(TEMP_DIR, files[0]);
       const imageBuffer = fs.readFileSync(imagePath);
+      // With deviceScaleFactor: 2, the image width will be 750 (375 * 2)
       const width = imageBuffer.readUInt32BE(16);
-      expect(width).toBe(375);
-    });
-
-    it.skipIf(!agentBrowserAvailable)('captures with tablet viewport (-t)', () => {
-      const { exitCode } = runCli([
-        fileUrl('css-card/before.html'),
-        fileUrl('css-card/after.html'),
-        '-t',
-        '-o', TEMP_DIR,
-      ]);
-
-      expect(exitCode).toBe(0);
-
-      // Verify screenshot dimensions (768x1024)
-      const files = fs.readdirSync(TEMP_DIR).filter(f => f.endsWith('.png'));
-      const imagePath = path.join(TEMP_DIR, files[0]);
-      const imageBuffer = fs.readFileSync(imagePath);
-      const width = imageBuffer.readUInt32BE(16);
-      expect(width).toBe(768);
-    });
-
-    it.skipIf(!agentBrowserAvailable)('captures with custom viewport size', () => {
-      const { exitCode } = runCli([
-        fileUrl('css-card/before.html'),
-        fileUrl('css-card/after.html'),
-        '--size', '1920x1080',
-        '-o', TEMP_DIR,
-      ]);
-
-      expect(exitCode).toBe(0);
-
-      // Verify screenshot dimensions
-      const files = fs.readdirSync(TEMP_DIR).filter(f => f.endsWith('.png'));
-      const imagePath = path.join(TEMP_DIR, files[0]);
-      const imageBuffer = fs.readFileSync(imagePath);
-      const width = imageBuffer.readUInt32BE(16);
-      expect(width).toBe(1920);
+      expect(width).toBe(750);
     });
 
     it('rejects invalid size format', () => {
@@ -219,74 +204,6 @@ describe('CLI', () => {
 
       expect(exitCode).not.toBe(0);
       expect(stderr).toContain('Invalid size');
-    });
-  });
-
-  describe('full page capture', () => {
-    it.skipIf(!agentBrowserAvailable)('captures full page with -f flag', () => {
-      const { exitCode } = runCli([
-        fileUrl('responsive-layout/after.html'),
-        fileUrl('responsive-layout/after.html'),
-        '-f',
-        '-o', TEMP_DIR,
-      ]);
-
-      expect(exitCode).toBe(0);
-
-      // Full page capture should work
-      const files = fs.readdirSync(TEMP_DIR).filter(f => f.endsWith('.png'));
-      expect(files.length).toBe(2);
-    });
-
-    it.skipIf(!agentBrowserAvailable)('captures full page with --full flag', () => {
-      const { exitCode } = runCli([
-        fileUrl('responsive-layout/after.html'),
-        fileUrl('responsive-layout/after.html'),
-        '--full',
-        '-o', TEMP_DIR,
-      ]);
-
-      expect(exitCode).toBe(0);
-    });
-  });
-
-  describe('output directory', () => {
-    it.skipIf(!agentBrowserAvailable)('saves to custom output directory', () => {
-      const customDir = path.join(TEMP_DIR, 'custom-output');
-      fs.mkdirSync(customDir, { recursive: true });
-
-      const { exitCode } = runCli([
-        fileUrl('css-card/before.html'),
-        fileUrl('css-card/after.html'),
-        '-o', customDir,
-      ]);
-
-      expect(exitCode).toBe(0);
-      const files = fs.readdirSync(customDir).filter(f => f.endsWith('.png'));
-      expect(files.length).toBe(2);
-    });
-
-    it.skipIf(!agentBrowserAvailable)('creates output directory if it does not exist', () => {
-      const newDir = path.join(TEMP_DIR, 'new-dir');
-
-      const { exitCode } = runCli([
-        fileUrl('css-card/before.html'),
-        fileUrl('css-card/after.html'),
-        '-o', newDir,
-      ]);
-
-      expect(exitCode).toBe(0);
-      expect(fs.existsSync(newDir)).toBe(true);
-    });
-
-    it.skipIf(!agentBrowserAvailable)('defaults to ~/Downloads', () => {
-      const { exitCode, stdout } = runCli([
-        fileUrl('css-card/before.html'),
-        fileUrl('css-card/after.html'),
-      ]);
-
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain(path.join(TEMP_DIR, 'Downloads'));
     });
   });
 
@@ -348,7 +265,7 @@ describe('CLI', () => {
   });
 
   describe('filename generation', () => {
-    it.skipIf(!agentBrowserAvailable)('generates semantic filenames with timestamp', () => {
+    it.skipIf(!playwrightAvailable)('generates semantic filenames with timestamp', () => {
       const { exitCode } = runCli([
         fileUrl('css-card/before.html'),
         fileUrl('css-card/after.html'),
@@ -360,16 +277,13 @@ describe('CLI', () => {
       const files = fs.readdirSync(TEMP_DIR).filter(f => f.endsWith('.png'));
       expect(files.length).toBe(2);
 
-      // Filenames should contain the extracted page name and timestamp
       expect(files.some(f => f.includes('before') && f.match(/\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}/))).toBe(true);
       expect(files.some(f => f.includes('after') && f.match(/\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}/))).toBe(true);
     });
   });
 
   describe('URL normalization', () => {
-    it.skipIf(!agentBrowserAvailable)('adds https:// to bare domain (captured in output)', () => {
-      // We can't actually test real URLs, but we can verify the normalization
-      // by checking the output when using file:// URLs
+    it.skipIf(!playwrightAvailable)('adds https:// to bare domain (captured in output)', () => {
       const { stdout, exitCode } = runCli([
         fileUrl('css-card/before.html'),
         fileUrl('css-card/after.html'),

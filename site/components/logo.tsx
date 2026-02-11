@@ -5,9 +5,8 @@ export function Logo({ className }: { className?: string }) {
         className="font-[family-name:var(--font-vanilla-cream)] text-xl leading-none tracking-wide"
         style={{ WebkitTextStroke: "0.5px #525252" }}
       >
-        before
+        pre
       </span>
-      <span className="font-normal text-neutral-600">and</span>
       <span className="relative font-medium">
         {/* top-left, larger */}
         <svg
@@ -59,7 +58,7 @@ export function Logo({ className }: { className?: string }) {
         >
           <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z" />
         </svg>
-        After
+        Post
       </span>
     </div>
   )

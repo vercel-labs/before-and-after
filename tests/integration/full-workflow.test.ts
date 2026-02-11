@@ -4,6 +4,10 @@ import { BeforeAndAfter } from '../../src/index';
 
 const TEST_PAGES = path.resolve(__dirname, '../fixtures/pages');
 
+// Browser tests require Playwright browsers to be installed
+// Set TEST_BROWSER=true to enable
+const playwrightAvailable = process.env.TEST_BROWSER === 'true';
+
 function fileUrl(relativePath: string): string {
   return `file://${path.join(TEST_PAGES, relativePath)}`;
 }
@@ -29,7 +33,7 @@ describe('BeforeAndAfter class', () => {
 });
 
 describe('End-to-end: capture before/after workflow', () => {
-  it('captures two URLs successfully', async () => {
+  it.skipIf(!playwrightAvailable)('captures two URLs successfully', async () => {
     const ba = new BeforeAndAfter();
 
     const captures = await ba.captureBeforeAfter({
@@ -43,7 +47,7 @@ describe('End-to-end: capture before/after workflow', () => {
     expect(isValidPng(captures.after.image)).toBe(true);
   });
 
-  it('captures identical pages', async () => {
+  it.skipIf(!playwrightAvailable)('captures identical pages', async () => {
     const ba = new BeforeAndAfter();
 
     const captures = await ba.captureBeforeAfter({
@@ -57,7 +61,7 @@ describe('End-to-end: capture before/after workflow', () => {
     expect(captures.before.image.equals(captures.after.image)).toBe(true);
   });
 
-  it('captures specific elements with selector', async () => {
+  it.skipIf(!playwrightAvailable)('captures specific elements with selector', async () => {
     const ba = new BeforeAndAfter();
 
     const captures = await ba.captureBeforeAfter({
@@ -77,7 +81,7 @@ describe('End-to-end: capture before/after workflow', () => {
     expect(isValidPng(captures.after.image)).toBe(true);
   });
 
-  it('captures at different viewports', async () => {
+  it.skipIf(!playwrightAvailable)('captures at different viewports', async () => {
     const ba = new BeforeAndAfter();
 
     const desktop = await ba.capture({
@@ -96,7 +100,7 @@ describe('End-to-end: capture before/after workflow', () => {
     expect(isValidPng(mobile.image)).toBe(true);
   });
 
-  it('captures full page screenshots', async () => {
+  it.skipIf(!playwrightAvailable)('captures full page screenshots', async () => {
     const ba = new BeforeAndAfter();
 
     const viewport = await ba.capture({
@@ -111,21 +115,18 @@ describe('End-to-end: capture before/after workflow', () => {
 
     expect(isValidPng(viewport.image)).toBe(true);
     expect(isValidPng(fullPage.image)).toBe(true);
-    // Both should be valid captures (full page may or may not be larger depending on content)
   });
 });
 
 describe('End-to-end: fromImages workflow', () => {
-  it('generates markdown from buffer images', async () => {
+  it.skipIf(!playwrightAvailable)('generates markdown from buffer images', async () => {
     const ba = new BeforeAndAfter();
 
-    // First capture some images
     const captures = await ba.captureBeforeAfter({
       before: fileUrl('css-card/before.html'),
       after: fileUrl('css-card/after.html'),
     });
 
-    // Then use them with fromImages
     const result = await ba.fromImages({
       before: captures.before.image,
       after: captures.after.image,
