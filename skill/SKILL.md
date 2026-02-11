@@ -1,70 +1,203 @@
 ---
-name: before-and-after
-description: Captures before/after screenshots of web pages or elements for visual comparison. Use when user says "take before and after", "screenshot comparison", "visual diff", "PR screenshots", "compare old and new", or needs to document UI changes. Accepts two URLs (file://, http://, https://) or two image paths.
+name: pre-post
+description: Captures before/after screenshots of web pages for visual comparison in PRs. Use when user says "take before and after", "screenshot comparison", "visual diff", "PR screenshots", or after making visual UI changes.
 allowed-tools:
-  - Bash(npx @vercel/before-and-after *)
-  - Bash(before-and-after *)
-  - Bash(which before-and-after)
-  - Bash(npm install -g @vercel/before-and-after)
+  - Bash(npx pre-post *)
+  - Bash(pre-post *)
   - Bash(*/upload-and-copy.sh *)
   - Bash(curl -s -o /dev/null -w *)
   - Bash(gh pr view *)
   - Bash(gh pr edit *)
-  - Bash(vercel inspect *)
-  - Bash(vercel whoami)
-  - Bash(which vercel)
-  - Bash(which gh)
+  - Bash(lsof -i *)
+  - Bash(mkdir -p /tmp/pre-post)
+  - Bash(git diff *)
 ---
 
-# Before-After Screenshot Skill
+# Pre-Post Screenshot Skill
 
-> **Package:** `@vercel/before-and-after`
-> Never use `before-and-after` (wrong package).
+> **Package:** `pre-post`
+> Visual diff tool for PRs — fastest path from code change to visual documentation.
 
 ## Agent Behavior Rules
 
 **DO NOT:**
 - Switch git branches, stash changes, start dev servers, or assume what "before" is
 - Use `--full` unless user explicitly asks for full page / full scroll capture
+- Post screenshots to PR without user approval
 
 **DO:**
 - Use `--markdown` when user wants PR integration or markdown output
-- Use `--mobile` / `--tablet` if user mentions phone, mobile, tablet, responsive, etc.
-- Assume current state is **After**
-- If user provides only one URL or says "PR screenshots" without URLs, **ASK**: "What URL should I use for the 'before' state? (production URL, preview deployment, or another local port)"
+- Use `--responsive` to capture both desktop and mobile viewports
+- Use `--mobile` / `--tablet` if user mentions phone, mobile, tablet, responsive
+- Assume current state is **After** (localhost = after, production = before)
+- Show screenshots to user before posting to PR
+- If user provides only one URL, **ASK**: "What URL should I use for the 'before' state? (production URL, preview deployment, or another local port)"
 
-## Execution Order (MUST follow)
+## Execution Order
 
-1. **Pre-flight** — `which before-and-after || npm install -g @vercel/before-and-after`
-2. **Protection check** — if `.vercel.app` URL: `curl -s -o /dev/null -w "%{http_code}" "<url>"` (401/403 = protected)
-3. **Capture** — `before-and-after "<before-url>" "<after-url>"`
-4. **Upload** — `./scripts/upload-and-copy.sh <before.png> <after.png> --markdown`
-5. **PR integration** — optionally `gh pr edit` to append markdown
+### 1. Pre-flight Checks
 
-**Never skip steps 1-2.**
+```bash
+# Detect running dev server
+lsof -i :3000 2>/dev/null || lsof -i :3001 2>/dev/null || lsof -i :5173 2>/dev/null || lsof -i :8080 2>/dev/null
+```
+
+If no dev server is running, tell the user to start one.
+
+```bash
+# Check production URL is accessible
+curl -s -o /dev/null -w "%{http_code}" "<production-url>"
+```
+
+- **200** → proceed
+- **401/403** → warn user: "Production URL requires authentication. Options: (1) provide a public URL, (2) skip 'before' and capture after-only, (3) provide auth cookies"
+- **No production URL** → "after-only" mode: screenshot localhost only, label as current state
+
+### 2. Route Detection + Refinement
+
+```bash
+# Detect affected routes from git diff
+npx pre-post detect
+```
+
+This outputs JSON with detected routes, confidence levels, and source files.
+
+**Claude's role:** Review the JSON output using conversation context:
+- Add routes you know are affected from the work done in this session
+- Remove false positives (e.g., API-only changes)
+- For dynamic routes (e.g., `/blog/[slug]`), ask user for a sample value
+- Present to user: "I'll screenshot these routes: `/dashboard`, `/settings`. Want to add or change any?"
+
+### 3. Screenshot Capture
+
+**Option A: CLI (preferred — deterministic)**
+
+```bash
+# Single route, desktop only
+npx pre-post compare \
+  --before-base https://prod.com \
+  --after-base http://localhost:3000 \
+  --routes /dashboard \
+  --output /tmp/pre-post
+
+# Multiple routes, responsive (desktop + mobile)
+npx pre-post compare \
+  --before-base https://prod.com \
+  --after-base http://localhost:3000 \
+  --routes /dashboard,/settings,/ \
+  --responsive \
+  --output /tmp/pre-post
+```
+
+**Option B: Playwright MCP (for more control)**
+
+Use when you need custom waits, interactions, or complex page states:
+
+```
+browser_resize(1280, 800)
+browser_navigate("https://prod.com/dashboard")
+browser_wait_for(time: 3)
+browser_take_screenshot(filename: "/tmp/pre-post/dashboard-desktop-before.png")
+
+browser_navigate("http://localhost:3000/dashboard")
+browser_wait_for(time: 3)
+browser_take_screenshot(filename: "/tmp/pre-post/dashboard-desktop-after.png")
+
+# Mobile
+browser_resize(375, 812)
+browser_navigate("https://prod.com/dashboard")
+browser_wait_for(time: 3)
+browser_take_screenshot(filename: "/tmp/pre-post/dashboard-mobile-before.png")
+
+browser_navigate("http://localhost:3000/dashboard")
+browser_wait_for(time: 3)
+browser_take_screenshot(filename: "/tmp/pre-post/dashboard-mobile-after.png")
+```
+
+### 4. User Approval
+
+Show screenshots in conversation. Ask: "Here are the before/after screenshots. Should I post to PR, retake any, or add more pages?"
+
+### 5. Upload + PR Markdown
+
+```bash
+# Upload and generate markdown
+mkdir -p /tmp/pre-post
+./scripts/upload-and-copy.sh /tmp/pre-post/before.png /tmp/pre-post/after.png --markdown
+```
+
+Or use the CLI's built-in upload:
+
+```bash
+npx pre-post <before.png> <after.png> --markdown
+```
+
+For multi-route PRs, generate this format:
+
+```markdown
+## Visual Changes
+
+### `/dashboard`
+
+<details open>
+<summary>Desktop (1280x800)</summary>
+
+| Before | After |
+|:------:|:-----:|
+| ![Before](url) | ![After](url) |
+</details>
+
+<details>
+<summary>Mobile (375x812)</summary>
+
+| Before | After |
+|:------:|:-----:|
+| ![Before](url) | ![After](url) |
+</details>
+
+---
+*Captured by [pre-post](https://github.com/juangadm/pre-post)*
+```
+
+### 6. PR Integration
+
+```bash
+# Get current PR
+gh pr view --json number,body
+
+# Append screenshots to PR body
+gh pr edit <number> --body "<existing-body>
+
+<generated-markdown>"
+```
+
+If no `gh` CLI: output markdown and tell user to paste manually.
 
 ## Quick Reference
 
 ```bash
-# Basic usage
-before-and-after <before-url> <after-url>
+# Basic usage (two URLs)
+pre-post site.com localhost:3000
 
-# With selector
-before-and-after url1 url2 ".hero-section"
+# Detect routes from git diff
+pre-post detect
+pre-post detect --framework nextjs-app
 
-# Different selectors for each
-before-and-after url1 url2 ".old-card" ".new-card"
+# Compare with auto-detected routes
+pre-post run --before-base https://prod.com --after-base http://localhost:3000
 
-# Viewports
-before-and-after url1 url2 --mobile    # 375x812
-before-and-after url1 url2 --tablet    # 768x1024
-before-and-after url1 url2 --full      # full scroll
+# Compare specific routes
+pre-post compare --before-base URL --after-base URL --routes /dashboard,/settings
+
+# Responsive (desktop + mobile)
+pre-post compare --before-base URL --after-base URL --responsive
 
 # From existing images
-before-and-after before.png after.png --markdown
+pre-post before.png after.png --markdown
 
-# Via npx (use full package name!)
-npx @vercel/before-and-after url1 url2
+# Via npx
+npx pre-post detect
+npx pre-post compare --before-base URL --after-base URL
 ```
 
 | Flag | Description |
@@ -74,9 +207,15 @@ npx @vercel/before-and-after url1 url2
 | `--size <WxH>` | Custom viewport |
 | `-f, --full` | Full scrollable page |
 | `-s, --selector` | CSS selector to capture |
+| `-r, --responsive` | Desktop + mobile capture |
+| `--routes <paths>` | Explicit route list (comma-separated) |
+| `--max-routes <n>` | Max detected routes (default: 5) |
+| `--framework <name>` | Force framework detection |
+| `--before-base <url>` | Production URL |
+| `--after-base <url>` | Localhost URL |
 | `-o, --output` | Output directory (default: ~/Downloads) |
-| `--markdown` | Upload images & output markdown table |
-| `--upload-url <url>` | Custom upload endpoint (default: 0x0.st) |
+| `--markdown` | Upload images & output markdown |
+| `--upload-url <url>` | Custom upload endpoint |
 
 ## Image Upload
 
@@ -88,37 +227,12 @@ npx @vercel/before-and-after url1 url2
 IMAGE_ADAPTER=gist ./scripts/upload-and-copy.sh before.png after.png --markdown
 ```
 
-## Vercel Deployment Protection
-
-If `.vercel.app` URL returns 401/403:
-
-1. Check Vercel CLI: `which vercel && vercel whoami`
-2. If available: `vercel inspect <url>` to get bypass token
-3. If not: Tell user to provide bypass token, take manual screenshots, or disable protection
-
-## PR Integration
-
-```bash
-# Check for gh CLI
-which gh
-
-# Get current PR
-gh pr view --json number,body
-
-# Append screenshots to PR body
-gh pr edit <number> --body "<existing-body>
-
-## Before and After
-<generated-markdown>"
-```
-
-If no `gh` CLI: output markdown and tell user to paste manually.
-
 ## Error Reference
 
 | Error | Fix |
 |-------|-----|
-| `command not found` | `npm install -g @vercel/before-and-after` |
-| `could not determine executable` | Use `npx @vercel/before-and-after` (full name) |
-| 401/403 on .vercel.app | See Vercel protection section |
+| `command not found` | `npm install -g pre-post` |
+| `browserType.launch: Executable doesn't exist` | `npx playwright install chromium` |
+| 401/403 on production URL | See pre-flight section above |
 | Element not found | Verify selector exists on page |
+| No changed files detected | Specify routes manually with `--routes` |

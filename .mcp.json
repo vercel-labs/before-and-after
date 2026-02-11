@@ -1,8 +1,11 @@
 {
   "mcpServers": {
-    "agentation": {
-      "command": "agentation-mcp",
-      "args": ["server"]
+    "playwright": {
+      "command": "npx",
+      "args": ["@anthropic-ai/mcp-playwright@latest"],
+      "env": {
+        "PLAYWRIGHT_HEADLESS": "true"
+      }
     }
   }
 }
