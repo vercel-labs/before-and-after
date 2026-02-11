@@ -89,3 +89,48 @@ export interface BeforeAndAfterOptions {
   /** Output directory for saved screenshots */
   outputDir?: string;
 }
+
+// ============================================================
+// Route Detection
+// ============================================================
+
+export interface DetectedRoute {
+  /** Route path, e.g., "/dashboard" */
+  path: string;
+  /** Source file that triggered detection, e.g., "app/dashboard/page.tsx" */
+  sourceFile: string;
+  /** How confident is the detection */
+  confidence: 'high' | 'medium' | 'low';
+  /** Human-readable reason for detection */
+  reason: string;
+}
+
+export interface RouteDetectionOptions {
+  /** Force a specific framework instead of auto-detecting */
+  framework?: 'nextjs-app' | 'nextjs-pages' | 'generic';
+  /** Maximum number of routes to return (default: 5) */
+  maxRoutes?: number;
+  /** Git diff target, e.g., "main...HEAD" or "HEAD~1" */
+  diffTarget?: string;
+}
+
+// ============================================================
+// Compare Mode
+// ============================================================
+
+export interface CompareOptions {
+  /** Base URL for "before" state (e.g., production URL) */
+  beforeBase: string;
+  /** Base URL for "after" state (e.g., localhost) */
+  afterBase: string;
+  /** Routes to capture */
+  routes: string[];
+  /** Capture at desktop + mobile viewports */
+  responsive?: boolean;
+  /** Viewport override (used when not in responsive mode) */
+  viewport?: ViewportConfig;
+  /** Output directory for screenshots */
+  output?: string;
+  /** Generate markdown output */
+  markdown?: boolean;
+}
