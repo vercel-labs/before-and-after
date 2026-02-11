@@ -4,10 +4,21 @@ import { parseArgs } from 'node:util';
 import path from 'path';
 import fs from 'fs';
 import { BeforeAndAfter, generateFilename } from '../index.js';
-import { ViewportConfig } from '../types.js';
+import { ViewportConfig, VIEWPORT_PRESETS } from '../types.js';
 import { closeBrowser } from '../browser.js';
+import { captureScreenshot, captureResponsive } from '../capture.js';
 import { uploadBeforeAfter } from '../upload.js';
 import { copyToClipboard } from '../clipboard.js';
+import { detectRoutes, getChangedFiles, detectFramework } from '../routes.js';
+
+// Determine subcommand
+const subcommand = process.argv[2];
+const isSubcommand = ['detect', 'compare', 'run'].includes(subcommand);
+
+if (isSubcommand) {
+  // Remove subcommand from argv for parseArgs
+  process.argv.splice(2, 1);
+}
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
@@ -24,15 +35,30 @@ const { values, positionals } = parseArgs({
     output: { type: 'string', short: 'o' },
     markdown: { type: 'boolean' },
     'upload-url': { type: 'string' },
+    // New options
+    responsive: { type: 'boolean', short: 'r' },
+    routes: { type: 'string' },
+    'max-routes': { type: 'string' },
+    framework: { type: 'string' },
+    'before-base': { type: 'string' },
+    'after-base': { type: 'string' },
   },
 });
 
 function printHelp(): void {
   console.log(`
-before-and-after — Screenshot comparison tool
+pre-post — Visual diff tool for PRs
 
 USAGE:
-  before-and-after <before> <after> [selector] [selector2]
+  pre-post <before> <after> [selector] [selector2]
+  pre-post detect [options]
+  pre-post compare --before-base <url> --after-base <url> [options]
+  pre-post run --before-base <url> --after-base <url> [options]
+
+SUBCOMMANDS:
+  detect              Detect affected routes from git diff (JSON output)
+  compare             Compare before/after URLs with screenshots
+  run                 Auto-detect routes + compare (detect + compare)
 
   Arguments can be URLs or image files (auto-detected).
   Selectors are optional - use one for both, or two for different selectors.
@@ -46,6 +72,16 @@ VIEWPORT OPTIONS:
 CAPTURE OPTIONS:
   -f, --full                 Capture full scrollable page
   -s, --selector <css>       Scroll element into view before capture
+  -r, --responsive           Capture at desktop + mobile viewports
+
+ROUTE DETECTION OPTIONS:
+      --routes <paths>       Explicit route list (comma-separated)
+      --max-routes <n>       Max routes to detect (default: 5)
+      --framework <name>     Force framework (nextjs-app, nextjs-pages, generic)
+
+COMPARE OPTIONS:
+      --before-base <url>    Base URL for "before" state (production)
+      --after-base <url>     Base URL for "after" state (localhost)
 
 OUTPUT OPTIONS:
   -o, --output <dir>         Output directory (default: ~/Downloads)
@@ -58,55 +94,45 @@ OTHER OPTIONS:
 
 EXAMPLES:
   # Compare two URLs (protocol optional)
-  before-and-after google.com facebook.com
-  before-and-after https://old.example.com https://new.example.com
+  pre-post google.com facebook.com
+  pre-post https://old.example.com https://new.example.com
 
-  # With selectors (same for both)
-  before-and-after url1 url2 ".hero-section"
+  # Detect routes from git diff
+  pre-post detect
+  pre-post detect --framework nextjs-app
 
-  # With different selectors
-  before-and-after url1 url2 ".old-hero" ".new-hero"
+  # Compare with auto-detected routes
+  pre-post run --before-base https://prod.com --after-base http://localhost:3000
 
-  # Mobile viewport
-  before-and-after url1 url2 --mobile
+  # Compare specific routes
+  pre-post compare --before-base https://prod.com --after-base http://localhost:3000 --routes /dashboard,/settings
 
-  # Full page capture
-  before-and-after url1 url2 --full
-
-  # Custom viewport size
-  before-and-after url1 url2 --size 1920x1080
+  # Responsive capture (desktop + mobile)
+  pre-post compare --before-base url1 --after-base url2 --responsive
 
   # Use existing images (auto-detected)
-  before-and-after before.png after.png --markdown
+  pre-post before.png after.png --markdown
 `);
 }
 
 const IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.tiff'];
 
-/**
- * Check if a path looks like an image file.
- */
 function isImageFile(filePath: string): boolean {
   const ext = path.extname(filePath).toLowerCase();
   return IMAGE_EXTENSIONS.includes(ext) && fs.existsSync(filePath);
 }
 
-/**
- * Normalize URL by adding protocol if not specified.
- * Uses http:// for localhost/127.0.0.1, https:// for everything else.
- */
 function normalizeUrl(url: string): string {
   if (/^(https?|file):\/\//i.test(url)) {
     return url;
   }
-  // Use http for localhost addresses
   if (/^(localhost|127\.0\.0\.1)(:|\/|$)/i.test(url)) {
     return `http://${url}`;
   }
   return `https://${url}`;
 }
 
-function resolveViewport(): ViewportConfig {
+function resolveViewportFlag(): ViewportConfig {
   if (values.mobile) return 'mobile';
   if (values.tablet) return 'tablet';
   if (values.size) {
@@ -120,7 +146,143 @@ function resolveViewport(): ViewportConfig {
   return 'desktop';
 }
 
-async function main(): Promise<void> {
+// ============================================================
+// Subcommand: detect
+// ============================================================
+async function runDetect(): Promise<void> {
+  const framework = values.framework as 'nextjs-app' | 'nextjs-pages' | 'generic' | undefined;
+  const maxRoutes = values['max-routes'] ? parseInt(values['max-routes']) : undefined;
+
+  const changedFiles = getChangedFiles();
+  if (changedFiles.length === 0) {
+    console.log(JSON.stringify({ routes: [], message: 'No changed files detected' }, null, 2));
+    return;
+  }
+
+  const detectedFramework = framework || detectFramework();
+  const routes = detectRoutes(changedFiles, { framework, maxRoutes });
+
+  console.log(JSON.stringify({
+    framework: detectedFramework,
+    changedFiles,
+    routes,
+  }, null, 2));
+}
+
+// ============================================================
+// Subcommand: compare
+// ============================================================
+async function runCompare(): Promise<void> {
+  const beforeBase = values['before-base'];
+  const afterBase = values['after-base'];
+
+  if (!beforeBase || !afterBase) {
+    console.error('Both --before-base and --after-base are required for compare.');
+    process.exit(1);
+  }
+
+  const routeList = values.routes
+    ? values.routes.split(',').map(r => r.trim())
+    : ['/'];
+
+  const responsive = values.responsive ?? false;
+  const viewport = resolveViewportFlag();
+  const outputDir = values.output || path.join(process.env.HOME || '~', 'Downloads');
+  fs.mkdirSync(outputDir, { recursive: true });
+
+  const timestamp = new Date();
+
+  try {
+    for (const route of routeList) {
+      const beforeUrl = normalizeUrl(beforeBase.replace(/\/$/, '') + route);
+      const afterUrl = normalizeUrl(afterBase.replace(/\/$/, '') + route);
+
+      if (responsive) {
+        // Capture desktop + mobile for each route
+        for (const preset of ['desktop', 'mobile'] as const) {
+          const vp = VIEWPORT_PRESETS[preset];
+
+          console.log(`Capturing ${route} @ ${preset} (${vp.width}x${vp.height})...`);
+
+          const beforeResult = await captureScreenshot({ url: beforeUrl, viewport: preset });
+          const afterResult = await captureScreenshot({ url: afterUrl, viewport: preset });
+
+          const routeSlug = route === '/' ? 'home' : route.replace(/^\//, '').replace(/\//g, '-');
+          const beforeFilename = `${routeSlug}-${preset}-before-${formatTimestamp(timestamp)}.png`;
+          const afterFilename = `${routeSlug}-${preset}-after-${formatTimestamp(timestamp)}.png`;
+
+          fs.writeFileSync(path.join(outputDir, beforeFilename), beforeResult.image);
+          fs.writeFileSync(path.join(outputDir, afterFilename), afterResult.image);
+
+          console.log(`  Saved: ${beforeFilename}, ${afterFilename}`);
+        }
+      } else {
+        console.log(`Capturing ${route}...`);
+
+        const beforeResult = await captureScreenshot({ url: beforeUrl, viewport, fullPage: values.full });
+        const afterResult = await captureScreenshot({ url: afterUrl, viewport, fullPage: values.full });
+
+        const routeSlug = route === '/' ? 'home' : route.replace(/^\//, '').replace(/\//g, '-');
+        const beforeFilename = `${routeSlug}-before-${formatTimestamp(timestamp)}.png`;
+        const afterFilename = `${routeSlug}-after-${formatTimestamp(timestamp)}.png`;
+
+        fs.writeFileSync(path.join(outputDir, beforeFilename), beforeResult.image);
+        fs.writeFileSync(path.join(outputDir, afterFilename), afterResult.image);
+
+        console.log(`  Saved: ${beforeFilename}, ${afterFilename}`);
+      }
+    }
+
+    console.log(`\nAll screenshots saved to: ${outputDir}`);
+  } finally {
+    await closeBrowser();
+  }
+}
+
+// ============================================================
+// Subcommand: run (detect + compare)
+// ============================================================
+async function runFull(): Promise<void> {
+  const beforeBase = values['before-base'];
+  const afterBase = values['after-base'];
+
+  if (!beforeBase || !afterBase) {
+    console.error('Both --before-base and --after-base are required for run.');
+    process.exit(1);
+  }
+
+  // Detect routes
+  const framework = values.framework as 'nextjs-app' | 'nextjs-pages' | 'generic' | undefined;
+  const maxRoutes = values['max-routes'] ? parseInt(values['max-routes']) : undefined;
+
+  const changedFiles = getChangedFiles();
+  let routeList: string[];
+
+  if (values.routes) {
+    routeList = values.routes.split(',').map(r => r.trim());
+  } else if (changedFiles.length > 0) {
+    const routes = detectRoutes(changedFiles, { framework, maxRoutes });
+    if (routes.length === 0) {
+      console.log('No visual routes detected. Defaulting to /');
+      routeList = ['/'];
+    } else {
+      routeList = routes.map(r => r.path);
+      console.log(`Detected routes: ${routeList.join(', ')}`);
+    }
+  } else {
+    console.log('No changed files detected. Defaulting to /');
+    routeList = ['/'];
+  }
+
+  // Override routes in values for compare to pick up
+  values.routes = routeList.join(',');
+  await runCompare();
+}
+
+// ============================================================
+// Default mode (original before-and-after behavior)
+// ============================================================
+async function runDefault(): Promise<void> {
   if (values.help) {
     printHelp();
     return;
@@ -132,7 +294,7 @@ async function main(): Promise<void> {
   }
 
   const [first, second, ...rest] = positionals;
-  const viewport = resolveViewport();
+  const viewport = resolveViewportFlag();
   const ba = new BeforeAndAfter({ viewport });
 
   try {
@@ -157,17 +319,15 @@ async function main(): Promise<void> {
     const afterUrl = normalizeUrl(second);
 
     // Resolve selectors: positional args override -s flag
-    // 1 extra arg = same selector for both
-    // 2 extra args = different selectors
     let beforeSelector = values.selector;
     let afterSelector = values.selector;
 
     if (rest.length >= 1) {
       beforeSelector = rest[0];
-      afterSelector = rest[0]; // Same for both by default
+      afterSelector = rest[0];
     }
     if (rest.length >= 2) {
-      afterSelector = rest[1]; // Different for after
+      afterSelector = rest[1];
     }
 
     const outputDir = values.output || path.join(process.env.HOME || '~', 'Downloads');
@@ -210,32 +370,57 @@ async function main(): Promise<void> {
     console.log(`\nSaved: ${beforePath}`);
     console.log(`Saved: ${afterPath}`);
 
-    // Output markdown if requested - upload images and copy to clipboard
+    // Output markdown if requested
     if (values.markdown) {
       const uploadUrl = values['upload-url'] || process.env.UPLOAD_URL;
       console.log(`\nUploading images${uploadUrl ? ` to ${uploadUrl}` : ''}...`);
 
-      const { beforeUrl, afterUrl } = await uploadBeforeAfter(
+      const { beforeUrl: bUrl, afterUrl: aUrl } = await uploadBeforeAfter(
         { image: result.before.image, filename: beforeFilename },
         { image: result.after.image, filename: afterFilename },
         uploadUrl
       );
 
-      console.log(`Before: ${beforeUrl}`);
-      console.log(`After:  ${afterUrl}`);
+      console.log(`Before: ${bUrl}`);
+      console.log(`After:  ${aUrl}`);
 
       const markdown = `| Before | After |
 |:------:|:-----:|
-| ![Before](${beforeUrl}) | ![After](${afterUrl}) |`;
+| ![Before](${bUrl}) | ![After](${aUrl}) |`;
 
       console.log(`\n${markdown}`);
 
       if (copyToClipboard(markdown)) {
-        console.log(`\n✓ Markdown copied to clipboard`);
+        console.log(`\nMarkdown copied to clipboard`);
       }
     }
   } finally {
-    closeBrowser();
+    await closeBrowser();
+  }
+}
+
+function formatTimestamp(date: Date): string {
+  return date.toISOString().replace(/[:.]/g, '-').slice(0, 19);
+}
+
+// ============================================================
+// Main dispatch
+// ============================================================
+async function main(): Promise<void> {
+  if (values.help && !isSubcommand) {
+    printHelp();
+    return;
+  }
+
+  switch (subcommand) {
+    case 'detect':
+      return runDetect();
+    case 'compare':
+      return runCompare();
+    case 'run':
+      return runFull();
+    default:
+      return runDefault();
   }
 }
 

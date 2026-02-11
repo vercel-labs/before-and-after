@@ -1,8 +1,9 @@
 export * from './types.js';
 export { resolveViewport } from './viewport.js';
-export { captureScreenshot, captureBeforeAfter } from './capture.js';
+export { captureScreenshot, captureBeforeAfter, captureResponsive } from './capture.js';
 export { generateFilename } from './filename.js';
-export { closeBrowser } from './browser.js';
+export { closeBrowser, readScreenshot } from './browser.js';
+export { detectRoutes, detectFramework, getChangedFiles } from './routes.js';
 
 import fs from 'fs';
 import path from 'path';

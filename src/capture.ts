@@ -3,6 +3,7 @@ import {
   CaptureResult,
   BeforeAfterCaptureOptions,
   BeforeAfterCaptureResult,
+  ViewportConfig,
 } from './types.js';
 import { resolveViewport } from './viewport.js';
 import { captureScreenshot as browserCapture } from './browser.js';
@@ -52,4 +53,23 @@ export async function captureBeforeAfter(
   const after = await captureScreenshot(afterOpts);
 
   return { before, after };
+}
+
+/**
+ * Capture a URL at multiple viewports (desktop + mobile by default).
+ * Returns a map of viewport label → CaptureResult.
+ */
+export async function captureResponsive(
+  url: string,
+  viewports: ViewportConfig[] = ['desktop', 'mobile'],
+): Promise<Map<string, CaptureResult>> {
+  const results = new Map<string, CaptureResult>();
+
+  for (const vp of viewports) {
+    const label = typeof vp === 'string' ? vp : `${vp.width}x${vp.height}`;
+    const result = await captureScreenshot({ url, viewport: vp });
+    results.set(label, result);
+  }
+
+  return results;
 }
