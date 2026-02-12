@@ -4,26 +4,26 @@ import { useState } from "react"
 import { Hero, STATE_ORDER, type HeroState } from "@/components/hero"
 
 export default function HeroPage() {
-  const [state, setState] = useState<HeroState>("initial")
+  const [phase, setPhase] = useState<HeroState>("idle")
   const [autoPlay, setAutoPlay] = useState(false)
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-neutral-100 gap-8">
       <Hero
-        state={state}
-        onStateChange={setState}
+        phase={phase}
+        onPhaseChange={setPhase}
         autoPlay={autoPlay}
       />
 
-      {/* State switcher */}
+      {/* Phase switcher */}
       <div className="flex flex-col items-center gap-4">
-        <div className="flex gap-1">
+        <div className="flex gap-1 flex-wrap justify-center">
           {STATE_ORDER.map((s) => (
             <button
               key={s}
-              onClick={() => setState(s)}
+              onClick={() => setPhase(s)}
               className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
-                state === s
+                phase === s
                   ? "bg-neutral-800 text-white"
                   : "bg-white text-neutral-600 hover:bg-neutral-200"
               }`}

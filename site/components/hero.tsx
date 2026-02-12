@@ -1,137 +1,148 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { motion, AnimatePresence, useAnimationControls } from "motion/react"
-import { Browser } from "@/components/browser"
+import { Browser, ContentA, ContentB, BrowserChrome } from "@/components/browser"
 import { PullRequest, DEFAULT_MARKDOWN, DEFAULT_TITLE } from "@/components/pull-request"
-import { FolderDefs, FolderBack, FolderFront } from "@/components/folder"
+import { Terminal, type TerminalLine } from "@/components/terminal"
 
-export type HeroState =
-  | "initial"
+// ─── Phase definitions ───────────────────────────────────────────────
+
+type Phase =
+  | "idle"
+  | "coding"
+  | "command"
+  | "output"
   | "capture"
   | "upload"
-  | "preview"
+  | "pr_reveal"
 
-export const STATE_ORDER: HeroState[] = [
-  "initial",
+const PHASE_ORDER: Phase[] = [
+  "idle",
+  "coding",
+  "command",
+  "output",
   "capture",
   "upload",
-  "preview",
+  "pr_reveal",
 ]
 
-const STATE_DURATIONS: Record<HeroState, number> = {
-  initial: 500,
+// Durations for timer-driven phases (coding/command use callbacks instead)
+const PHASE_DURATIONS: Partial<Record<Phase, number>> = {
+  idle: 1200,
+  output: 1000,
   capture: 1000,
-  upload: 1600,
-  preview: 1800,
+  upload: 1400,
+  pr_reveal: 2800,
 }
 
-function getNextState(state: HeroState): HeroState {
-  const index = STATE_ORDER.indexOf(state)
-  return STATE_ORDER[(index + 1) % STATE_ORDER.length]
+function phaseIdx(phase: Phase) {
+  return PHASE_ORDER.indexOf(phase)
 }
 
-interface HeroProps {
-  state?: HeroState
-  onStateChange?: (state: HeroState) => void
-  autoPlay?: boolean
-  isReplay?: boolean
+function nextPhase(phase: Phase): Phase {
+  return PHASE_ORDER[(phaseIdx(phase) + 1) % PHASE_ORDER.length]
 }
 
-export function Hero({ state: controlledState, onStateChange, autoPlay = true, isReplay = false }: HeroProps) {
-  // Use controlled state if provided, otherwise internal
-  const state = controlledState ?? "initial"
+// ─── Terminal line builder ───────────────────────────────────────────
 
-  // Handle exit animation completion - triggers next cycle immediately
-  const handleCapturesExitComplete = () => {
-    if (state === "initial" && isReplay && onStateChange) {
-      onStateChange("capture")
-    }
+function buildLines(
+  phase: Phase,
+  onCodingComplete: () => void,
+  onCommandComplete: () => void,
+): TerminalLine[] {
+  const idx = phaseIdx(phase)
+
+  const lines: TerminalLine[] = []
+
+  // Phase 1 (idle): blinking cursor placeholder
+  if (idx === 0) {
+    return lines
   }
 
-  useEffect(() => {
-    if (!autoPlay || !onStateChange) return
+  // Phase 2 (coding): editing lines appear progressively
+  if (idx >= 1) {
+    lines.push({
+      type: "prompt",
+      text: "Editing app/page.tsx...",
+      visible: true,
+      typing: idx === 1,
+      onTypingComplete: idx === 1 ? onCodingComplete : undefined,
+    })
+  }
+  if (idx >= 2) {
+    lines.push(
+      { type: "output", text: "  Updated navigation layout", visible: true },
+      { type: "output", text: "  Added feature cards", visible: true },
+      { type: "blank", text: "", visible: true },
+    )
+  }
 
-    // During replay initial state, the timer is not used - onExitComplete handles the transition
-    if (state === "initial" && isReplay) return
+  // Phase 3 (command): /pre-post typing
+  if (idx >= 2) {
+    lines.push({
+      type: "prompt",
+      text: "/pre-post",
+      visible: true,
+      typing: idx === 2,
+      onTypingComplete: idx === 2 ? onCommandComplete : undefined,
+    })
+  }
 
-    const timer = setTimeout(() => {
-      onStateChange(getNextState(state))
-    }, STATE_DURATIONS[state])
+  // Phase 4 (output): detection lines
+  if (idx >= 3) {
+    lines.push(
+      { type: "blank", text: "", visible: true },
+      { type: "output", text: "Detecting routes... found /", visible: true },
+      { type: "output", text: "Capturing / (desktop)...", visible: true },
+    )
+  }
 
-    return () => clearTimeout(timer)
-  }, [state, autoPlay, onStateChange, isReplay])
+  // Phase 6 (upload): success
+  if (idx >= 5) {
+    lines.push(
+      { type: "blank", text: "", visible: true },
+      { type: "success", text: "Added to PR #42", visible: true },
+    )
+  }
 
-  // Derived state
-  const showCaptures = state !== "initial"
-  const capturePosition = state === "capture" ? "browser" : state === "preview" ? "folder" : "center"
-  const showUploading = state === "upload"
-  const capturesOpacity = state === "upload" ? 0.8 : 1
-  // On replay, keep preview tab visible during initial state while captures exit
-  const isInitialReplay = state === "initial" && isReplay
-  const githubTab = (state === "preview" || isInitialReplay) ? "preview" : "write"
-  // Show full markdown during upload (text appears) and preview states
-  const showFullMarkdown = state === "upload" || state === "preview" || isInitialReplay
+  return lines
+}
 
+// ─── AnimatedBrowser ─────────────────────────────────────────────────
+
+function AnimatedBrowser({
+  showContentB,
+  url,
+}: {
+  showContentB: boolean
+  url: string
+}) {
   return (
-    <div className="mx-auto w-full max-w-[540px] px-3 sm:px-4">
-      <div className="grid grid-cols-[1fr_1fr] gap-0.5 sm:gap-1 relative">
-        {/* Browser A */}
-        <Browser variant="A" url="site.com" />
-
-        {/* Browser B */}
-        <Browser variant="B" url="localhost" />
-
-        {/* GitHub PR spanning both columns */}
-        <div className="col-span-2 relative">
-          <PullRequest
-            tab={githubTab}
-            markdown={showFullMarkdown ? DEFAULT_MARKDOWN : DEFAULT_TITLE}
-            interactive={state === "preview"}
-          />
-          {/* Downloads folder - back layer */}
-          <div className="absolute -bottom-4 -right-4 scale-[0.6] origin-bottom-right z-[30]">
-            <FolderLayer layer="back" />
-          </div>
-          {/* Downloads folder - front layer (renders on top of captures) */}
-          <div className="absolute -bottom-4 -right-4 scale-[0.6] origin-bottom-right z-[45]">
-            <FolderLayer layer="front" />
-          </div>
-        </div>
-
-        {/* Animated captures */}
-        <AnimatePresence onExitComplete={handleCapturesExitComplete}>
-          {showCaptures && (
-            <>
-              <Capture
-                variant="A"
-                position={capturePosition}
-                opacity={capturesOpacity}
-                style={{ zIndex: 35 }}
-              />
-              <Capture
-                variant="B"
-                position={capturePosition}
-                opacity={capturesOpacity}
-                delay={0.05}
-                style={{ zIndex: 38 }}
-              />
-            </>
-          )}
-        </AnimatePresence>
-
-        {/* Single centered uploading spinner */}
-        <AnimatePresence>
-          {showUploading && <CenteredUploadSpinner />}
-        </AnimatePresence>
+    <div className="w-full rounded-lg overflow-hidden bg-white border border-neutral-200 relative">
+      <BrowserChrome url={url} />
+      <div className="bg-white relative" style={{ aspectRatio: "16 / 9" }}>
+        {/* ContentA always renders as base */}
+        <ContentA />
+        {/* ContentB crossfades on top */}
+        <motion.div
+          className="absolute inset-0"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: showContentB ? 1 : 0 }}
+          transition={{ duration: 0.6, ease: "easeInOut" }}
+        >
+          <ContentB />
+        </motion.div>
       </div>
     </div>
   )
 }
 
+// ─── Capture ─────────────────────────────────────────────────────────
+
 interface CaptureProps {
   variant: "A" | "B"
-  position: "browser" | "center" | "folder"
+  position: "browser" | "center"
   opacity?: number
   delay?: number
   style?: React.CSSProperties
@@ -140,9 +151,7 @@ interface CaptureProps {
 function Capture({ variant, position, opacity = 1, delay = 0, style }: CaptureProps) {
   const isA = variant === "A"
   const controls = useAnimationControls()
-  const prevPosition = useRef(position)
 
-  // Position exactly over the browser (slightly scaled up with subtle rotation)
   const browserPosition = {
     left: isA ? "25%" : "75%",
     top: 0,
@@ -152,7 +161,6 @@ function Capture({ variant, position, opacity = 1, delay = 0, style }: CapturePr
     rotate: isA ? -1 : 1,
   }
 
-  // Center position - captures sized to match folder width
   const centerPosition = {
     left: "50%",
     top: "50%",
@@ -162,36 +170,15 @@ function Capture({ variant, position, opacity = 1, delay = 0, style }: CapturePr
     rotate: isA ? -5 : 3,
   }
 
-  // Folder position - captures sized to match download icon width, stacked on top of each other
-  const folderPosition = {
-    left: "90%",
-    top: isA ? "90%" : "88%",
-    x: "-50%",
-    y: "-50%",
-    scale: 0.42,
-    rotate: isA ? -6 : 4,
-  }
-
   const positions = {
     browser: browserPosition,
     center: centerPosition,
-    folder: folderPosition,
   }
 
   const showFlash = position === "browser"
 
-  // Handle position changes - use set() for instant reset, animate() otherwise
   useEffect(() => {
-    const isResetting = prevPosition.current === "folder" && position === "browser"
-    prevPosition.current = position
-
-    if (isResetting) {
-      // Instant jump back to start
-      controls.set({ ...positions[position], opacity })
-    } else {
-      // Normal animated transition
-      controls.start({ ...positions[position], opacity })
-    }
+    controls.start({ ...positions[position], opacity })
   }, [position, opacity, controls])
 
   return (
@@ -208,7 +195,7 @@ function Capture({ variant, position, opacity = 1, delay = 0, style }: CapturePr
         opacity: 1,
       }}
       animate={controls}
-      exit={{ opacity: 0, scale: 0 }}
+      exit={{ opacity: 0, scale: 0, transition: { duration: 0.2 } }}
       transition={{
         type: "spring",
         bounce: 0.2,
@@ -221,7 +208,7 @@ function Capture({ variant, position, opacity = 1, delay = 0, style }: CapturePr
         style={{ boxShadow: "0 8px 30px rgba(0,0,0,0.25)" }}
       >
         <Browser variant={variant} url={variant === "A" ? "site.com" : "localhost"} />
-        {/* Camera flash overlay - white that fades out */}
+        {/* Camera flash overlay */}
         <motion.div
           className="absolute inset-0 bg-white rounded-lg pointer-events-none"
           initial={{ opacity: 1 }}
@@ -232,6 +219,8 @@ function Capture({ variant, position, opacity = 1, delay = 0, style }: CapturePr
     </motion.div>
   )
 }
+
+// ─── Upload spinner ──────────────────────────────────────────────────
 
 function CenteredUploadSpinner() {
   return (
@@ -263,43 +252,159 @@ function CenteredUploadSpinner() {
   )
 }
 
-const FOLDER_SIZE = 220
-const FOLDER_ASPECT_RATIO = 0.82
-const FOLDER_VIEWBOX = "0 0 512 420"
+// ─── Hero ────────────────────────────────────────────────────────────
 
-function FolderLayer({ layer }: { layer: "back" | "front" }) {
-  const height = Math.round(FOLDER_SIZE * FOLDER_ASPECT_RATIO)
-  const id = "hero-folder"
+interface HeroProps {
+  phase?: Phase
+  onPhaseChange?: (phase: Phase) => void
+  autoPlay?: boolean
+}
+
+export function Hero({ phase: controlledPhase, onPhaseChange, autoPlay = true }: HeroProps) {
+  const phase = controlledPhase ?? "idle"
+  const idx = phaseIdx(phase)
+
+  // PR tab: starts on "write", switches to "preview" after 1s during pr_reveal
+  const [prTab, setPrTab] = useState<"write" | "preview">("write")
+
+  useEffect(() => {
+    if (phase !== "pr_reveal") {
+      setPrTab("write")
+      return
+    }
+    const timer = setTimeout(() => setPrTab("preview"), 1000)
+    return () => clearTimeout(timer)
+  }, [phase])
+
+  // Advance phase helper
+  const advance = useCallback(() => {
+    onPhaseChange?.(nextPhase(phase))
+  }, [phase, onPhaseChange])
+
+  // Timer-driven phases
+  useEffect(() => {
+    if (!autoPlay || !onPhaseChange) return
+    // coding and command phases advance via typing callback, not timer
+    if (phase === "coding" || phase === "command") return
+
+    const duration = PHASE_DURATIONS[phase]
+    if (duration == null) return
+
+    const timer = setTimeout(advance, duration)
+    return () => clearTimeout(timer)
+  }, [phase, autoPlay, onPhaseChange, advance])
+
+  // Callback-driven phase advances
+  const onCodingComplete = useCallback(() => {
+    if (autoPlay) onPhaseChange?.("command")
+  }, [autoPlay, onPhaseChange])
+
+  const onCommandComplete = useCallback(() => {
+    if (autoPlay) onPhaseChange?.("output")
+  }, [autoPlay, onPhaseChange])
+
+  // ─── Derived state ───────────────────────────────────────────────
+  const showContentB = idx >= 1 // diverge browser B during coding phase
+  const showTerminal = idx <= 5
+  const showCaptures = idx >= 4 && idx <= 5
+  const capturePosition: "browser" | "center" = phase === "capture" ? "browser" : "center"
+  const capturesOpacity = phase === "upload" ? 0.75 : 1
+  const showSpinner = phase === "upload"
+  const showPR = idx >= 6
+
+  // Terminal lines
+  const terminalLines = buildLines(phase, onCodingComplete, onCommandComplete)
+
+  // PR markdown
+  const showFullMarkdown = idx >= 5
 
   return (
-    <div className="relative" style={{ width: FOLDER_SIZE, height }}>
-      <svg
-        className="absolute inset-0 w-full h-full"
-        viewBox={FOLDER_VIEWBOX}
-        fill="none"
-        style={{ filter: layer === "back" ? "drop-shadow(0 8px 20px rgba(0,0,0,0.12))" : undefined }}
-      >
-        <defs>
-          <FolderDefs id={id} />
-        </defs>
-        {layer === "back" ? <FolderBack id={id} /> : <FolderFront id={id} />}
-      </svg>
+    <div className="mx-auto w-full max-w-[540px] px-3 sm:px-4">
+      <div className="grid grid-cols-[1fr_1fr] gap-0.5 sm:gap-1 relative">
+        {/* Browser A — always ContentA */}
+        <Browser variant="A" url="site.com" />
+
+        {/* Browser B — crossfades from ContentA to ContentB */}
+        <AnimatedBrowser showContentB={showContentB} url="localhost:3000" />
+
+        {/* Row 2: Terminal ↔ PR swap — fixed height to prevent layout shift */}
+        <div className="col-span-2 relative overflow-hidden" style={{ minHeight: "290px" }}>
+          <AnimatePresence mode="wait">
+            {showTerminal && (
+              <motion.div
+                key="terminal"
+                className="absolute inset-0"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{
+                  enter: { type: "spring", bounce: 0.1, duration: 0.35 },
+                  exit: { type: "spring", bounce: 0, duration: 0.25 },
+                }}
+              >
+                <Terminal
+                  lines={terminalLines}
+                  className="w-full h-full"
+                />
+              </motion.div>
+            )}
+            {showPR && (
+              <motion.div
+                key="pr"
+                className="absolute inset-0"
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+                transition={{ type: "spring", bounce: 0.15, duration: 0.4 }}
+              >
+                <PullRequest
+                  tab={prTab}
+                  markdown={showFullMarkdown ? DEFAULT_MARKDOWN : DEFAULT_TITLE}
+                  interactive={false}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Animated captures */}
+        <AnimatePresence>
+          {showCaptures && (
+            <>
+              <Capture
+                variant="A"
+                position={capturePosition}
+                opacity={capturesOpacity}
+                style={{ zIndex: 35 }}
+              />
+              <Capture
+                variant="B"
+                position={capturePosition}
+                opacity={capturesOpacity}
+                delay={0.05}
+                style={{ zIndex: 38 }}
+              />
+            </>
+          )}
+        </AnimatePresence>
+
+        {/* Upload spinner */}
+        <AnimatePresence>
+          {showSpinner && <CenteredUploadSpinner />}
+        </AnimatePresence>
+      </div>
     </div>
   )
 }
 
-// Standalone auto-playing hero
+// ─── Auto-playing wrapper (used by page.tsx) ─────────────────────────
+
 export function AutoPlayHero() {
-  const [state, setState] = useState<HeroState>("initial")
-  const [hasPlayed, setHasPlayed] = useState(false)
+  const [phase, setPhase] = useState<Phase>("idle")
 
-  const handleStateChange = (newState: HeroState) => {
-    // Mark as played once we leave initial for the first time
-    if (state === "initial" && !hasPlayed) {
-      setHasPlayed(true)
-    }
-    setState(newState)
-  }
-
-  return <Hero state={state} onStateChange={handleStateChange} autoPlay isReplay={hasPlayed} />
+  return <Hero phase={phase} onPhaseChange={setPhase} autoPlay />
 }
+
+// Re-export types for compatibility
+export type HeroState = Phase
+export const STATE_ORDER = PHASE_ORDER
