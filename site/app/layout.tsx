@@ -1,23 +1,30 @@
 import React from "react"
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google"
 import localFont from "next/font/local"
 
 import "./globals.css"
 
-const geist = Geist({
+const ibmPlexSans = IBM_Plex_Sans({
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-sans",
 })
 
-const geistMono = Geist_Mono({
+const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
+  weight: ["400", "500"],
   variable: "--font-mono",
 })
 
 const vanillaCream = localFont({
   src: "./fonts/VanillaCreamOx-Regular.otf",
   variable: "--font-vanilla-cream",
+})
+
+const biroScript = localFont({
+  src: "./fonts/Biro_Script_reduced.otf",
+  variable: "--font-biro-script",
 })
 
 export const metadata: Metadata = {
@@ -49,7 +56,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geist.variable} ${geistMono.variable} ${vanillaCream.variable} font-sans antialiased`}>
+      <body className={`${ibmPlexSans.variable} ${ibmPlexMono.variable} ${vanillaCream.variable} ${biroScript.variable} font-sans antialiased`}>
         {children}
       </body>
     </html>

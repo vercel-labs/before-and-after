@@ -2,12 +2,13 @@ export function Logo({ className }: { className?: string }) {
   return (
     <div className={`flex items-center gap-1.5 ${className ?? ""}`}>
       <span
-        className="font-[family-name:var(--font-vanilla-cream)] text-xl leading-none tracking-wide"
+        className="font-[family-name:var(--font-biro-script)] text-xl leading-none tracking-wide"
         style={{ WebkitTextStroke: "0.5px #525252" }}
       >
-        pre
+        PRE
       </span>
-      <span className="relative font-medium">
+      <span className="text-xs text-neutral-400 italic">vs</span>
+      <span className="relative font-medium text-xl leading-none">
         {/* top-left, larger */}
         <svg
           className="absolute -left-1 -top-1 w-2 h-2 text-neutral-400"
