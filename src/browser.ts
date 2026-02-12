@@ -22,7 +22,11 @@ export interface ScreenshotOptions {
  */
 async function getPage(viewport: ViewportSize): Promise<Page> {
   if (!browser) {
-    browser = await chromium.launch({ headless: true });
+    try {
+      browser = await chromium.launch({ headless: true, channel: 'chrome' });
+    } catch {
+      browser = await chromium.launch({ headless: true });
+    }
   }
   if (!page) {
     page = await browser.newPage({
