@@ -4,6 +4,10 @@ Visual diff tool that captures before/after screenshots for PRs. Use it as a Cla
 
 > Forked from [before-and-after](https://github.com/vercel-labs/before-and-after) by [James Clements](https://github.com/jamesclement) / Vercel Labs.
 
+## TODO
+
+- [ ] Publish to npm so `npm i -g pre-post` and `npx pre-post` work out of the box
+
 ## What Changed from the Original
 
 | Area | before-and-after | pre-post |
