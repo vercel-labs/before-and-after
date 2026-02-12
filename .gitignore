@@ -34,3 +34,6 @@ content/
 
 # Local notes
 GITHUB_VIDEO_UPLOAD.md
+
+# Before/after screenshots (committed to PR branches, not main)
+.pre-post/

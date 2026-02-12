@@ -86,7 +86,7 @@ COMPARE OPTIONS:
 OUTPUT OPTIONS:
   -o, --output <dir>         Output directory (default: ~/Downloads)
       --markdown             Upload images & output markdown table
-      --upload-url <url>     Custom upload endpoint (default: 0x0.st)
+      --upload-url <url>     Upload endpoint (overrides git-native default)
                              Auto-detects: 0x0.st, blob.vercel, generic PUT
 
 OTHER OPTIONS:
@@ -384,9 +384,9 @@ async function runDefault(): Promise<void> {
       console.log(`Before: ${bUrl}`);
       console.log(`After:  ${aUrl}`);
 
-      const markdown = `| Before | After |
-|:------:|:-----:|
-| ![Before](${bUrl}) | ![After](${aUrl}) |`;
+      const markdown = `| Pre | Post |
+|:---:|:----:|
+| ![Pre](${bUrl}) | ![Post](${aUrl}) |`;
 
       console.log(`\n${markdown}`);
 

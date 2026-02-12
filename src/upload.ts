@@ -1,7 +1,12 @@
 /**
  * Image upload for generating shareable URLs.
- * Auto-detects service from URL, defaults to 0x0.st
+ * Default: git-native (commits to .pre-post/ on current branch).
+ * Opt-in: 0x0.st, Vercel Blob, generic PUT via --upload-url.
  */
+
+import { execSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
 
 const DEFAULT_UPLOAD_URL = 'https://0x0.st';
 
@@ -82,17 +87,60 @@ async function uploadGenericPut(image: Buffer, filename: string, url: string): P
 }
 
 /**
- * Upload before/after images in parallel and return URLs
+ * Write an image to .pre-post/ in the repo root, stage it, and return
+ * the raw.githubusercontent.com URL it will resolve to after push.
+ */
+export function uploadGitNative(image: Buffer, filename: string): string {
+  const repoRoot = execSync('git rev-parse --show-toplevel', { encoding: 'utf-8' }).trim();
+  const branch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf-8' }).trim();
+  const remoteUrl = execSync('git remote get-url origin', { encoding: 'utf-8' }).trim();
+
+  // Parse owner/repo from HTTPS or SSH remote URL
+  const ownerRepo = remoteUrl
+    .replace(/^(https?:\/\/github\.com\/|git@github\.com:)/, '')
+    .replace(/\.git$/, '');
+
+  const destDir = path.join(repoRoot, '.pre-post');
+  fs.mkdirSync(destDir, { recursive: true });
+
+  const dest = path.join(destDir, filename);
+  fs.writeFileSync(dest, image);
+  execSync(`git add -f "${dest}"`);
+
+  return `https://raw.githubusercontent.com/${ownerRepo}/${branch}/.pre-post/${filename}`;
+}
+
+/**
+ * Commit and push all staged .pre-post/ screenshots in one batch.
+ */
+export function commitAndPushScreenshots(): void {
+  execSync('git commit -m "chore: add pre/post screenshots"');
+  execSync('git push origin HEAD');
+}
+
+/**
+ * Upload before/after images and return URLs.
+ * When uploadUrl is provided, uses the HTTP-based upload path.
+ * Otherwise, uses git-native (commit to .pre-post/).
  */
 export async function uploadBeforeAfter(
   before: { image: Buffer; filename: string },
   after: { image: Buffer; filename: string },
   uploadUrl?: string
 ): Promise<{ beforeUrl: string; afterUrl: string }> {
-  const [beforeUrl, afterUrl] = await Promise.all([
-    uploadImage(before.image, before.filename, uploadUrl),
-    uploadImage(after.image, after.filename, uploadUrl),
-  ]);
+  // If an explicit upload URL is provided, use HTTP upload
+  if (uploadUrl) {
+    const [beforeUrl, afterUrl] = await Promise.all([
+      uploadImage(before.image, before.filename, uploadUrl),
+      uploadImage(after.image, after.filename, uploadUrl),
+    ]);
+    return { beforeUrl, afterUrl };
+  }
+
+  // Default: git-native — stage both, then commit+push once
+  const beforeUrl = uploadGitNative(before.image, before.filename);
+  const afterUrl = uploadGitNative(after.image, after.filename);
+  commitAndPushScreenshots();
 
   return { beforeUrl, afterUrl };
 }

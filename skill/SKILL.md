@@ -5,6 +5,9 @@ allowed-tools:
   - Bash(npx pre-post *)
   - Bash(pre-post *)
   - Bash(*/upload-and-copy.sh *)
+  - Bash(git add *)
+  - Bash(git commit -m *)
+  - Bash(git push origin *)
   - Bash(curl -s -o /dev/null -w *)
   - Bash(gh pr view *)
   - Bash(gh pr edit *)
@@ -142,17 +145,17 @@ For multi-route PRs, generate this format:
 <details open>
 <summary>Desktop (1280x800)</summary>
 
-| Before | After |
-|:------:|:-----:|
-| ![Before](url) | ![After](url) |
+| Pre | Post |
+|:---:|:----:|
+| ![Pre](url) | ![Post](url) |
 </details>
 
 <details>
 <summary>Mobile (375x812)</summary>
 
-| Before | After |
-|:------:|:-----:|
-| ![Before](url) | ![After](url) |
+| Pre | Post |
+|:---:|:----:|
+| ![Pre](url) | ![Post](url) |
 </details>
 
 ---
@@ -215,13 +218,18 @@ npx pre-post compare --before-base URL --after-base URL
 | `--after-base <url>` | Localhost URL |
 | `-o, --output` | Output directory (default: ~/Downloads) |
 | `--markdown` | Upload images & output markdown |
-| `--upload-url <url>` | Custom upload endpoint |
+| `--upload-url <url>` | Upload endpoint (overrides git-native default) |
 
 ## Image Upload
 
+Screenshots are committed to `.pre-post/` on the current PR branch and served via `raw.githubusercontent.com`. This is the default — no external services needed.
+
 ```bash
-# Default (0x0.st - no signup needed)
+# Default (git-native — commits to PR branch)
 ./scripts/upload-and-copy.sh before.png after.png --markdown
+
+# Fallback: 0x0.st (no signup needed, 365-day expiry)
+IMAGE_ADAPTER=0x0st ./scripts/upload-and-copy.sh before.png after.png --markdown
 
 # GitHub Gist
 IMAGE_ADAPTER=gist ./scripts/upload-and-copy.sh before.png after.png --markdown
