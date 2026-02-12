@@ -59,9 +59,9 @@ export default function Page() {
             </nav>
           </div>
           <p className="mb-8 sm:mb-12 text-[14px] sm:text-[15px]">
-            Pre-post is the fastest path from code change to visual PR
-            documentation. Add it as a skill for Claude Code to call
-            automatically, or use it directly from the command line.
+            Automatic visual diffs for PRs. Pre-post reads your git
+            changes, figures out which pages changed, and screenshots
+            them.
           </p>
         </div>
 
@@ -72,35 +72,28 @@ export default function Page() {
 
         {/* Content - constrained width */}
         <div className="max-w-[540px] mx-auto px-4 sm:px-6 space-y-8 sm:space-y-10">
+          <section className="space-y-3">
+            <h2 className="text-neutral-800">How it works</h2>
+            <ol className="text-sm space-y-2 list-decimal list-inside">
+              <li>Make your UI changes</li>
+              <li>Say <code className="text-neutral-800 bg-neutral-50 px-1 sm:px-1.5 py-0.5 rounded font-mono text-[12px] sm:text-[14px]">/pre-post</code> in Claude Code</li>
+              <li>Pre-post reads your git diff and detects which pages changed</li>
+              <li>It screenshots each route — production vs your new version</li>
+              <li>You review the screenshots</li>
+              <li>Pre-post adds a before/after table to your PR</li>
+            </ol>
+            <p className="text-sm text-neutral-400">
+              Works with localhost, Vercel preview deploys, Netlify, or any accessible URL.
+            </p>
+          </section>
+
+          <hr className="border-neutral-100" />
+
           <section id="install" className="scroll-mt-8 space-y-3">
             <h2 className="text-neutral-800">Install</h2>
             <p className="text-sm">Install globally to use from anywhere</p>
             <Code>npm i -g pre-post</Code>
           </section>
-
-          <section className="space-y-3">
-            <h2 className="text-neutral-800">Basic Use</h2>
-            <p className="text-sm">
-              Use the <code className="text-neutral-800 bg-neutral-50 px-1 sm:px-1.5 py-0.5 rounded font-mono text-[12px] sm:text-[14px]">/pre-post</code> skill
-              in Claude Code to automatically detect routes, capture
-              before/after screenshots, and post them to your PR
-            </p>
-            <Code>pre-post site.com localhost:3000</Code>
-          </section>
-
-          <hr className="border-neutral-100" />
-
-          <section className="space-y-3">
-            <h2 className="text-neutral-800">Route Detection</h2>
-            <p className="text-sm">
-              Automatically detect which routes are affected by your changes
-              using git diff analysis
-            </p>
-            <Code>pre-post detect</Code>
-            <Code>pre-post run --before-base https://prod.com --after-base http://localhost:3000</Code>
-          </section>
-
-          <hr className="border-neutral-100" />
 
           <section id="skill" className="scroll-mt-8 space-y-3">
             <h2 className="text-neutral-800">Add Skill</h2>
@@ -121,104 +114,121 @@ export default function Page() {
 
           <hr className="border-neutral-100" />
 
-          <section id="options" className="scroll-mt-8 space-y-6">
-            <h2 className="text-neutral-800">Options</h2>
-
-            <div className="space-y-2">
-              <p className="text-sm">
-                Capture responsive screenshots (desktop + mobile)
-              </p>
-              <Code>pre-post compare --before-base url1 --after-base url2 --responsive</Code>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-sm">
-                Compare specific routes
-              </p>
-              <Code>pre-post compare --before-base url1 --after-base url2 --routes /dashboard,/settings</Code>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-sm">
-                Capture a specific element using a CSS selector
-              </p>
-              <Code>pre-post url1 url2 &quot;.hero&quot;</Code>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-sm">
-                Use different selectors for before and after
-              </p>
-              <Code>
-                pre-post url1 url2 &quot;.old&quot; &quot;.new&quot;
-              </Code>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-sm">
-                Capture at mobile (375x812), tablet (768x1024), or custom
-                viewport
-              </p>
-              <Code>pre-post url1 url2 --mobile</Code>
-              <Code>pre-post url1 url2 --size 1920x1080</Code>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-sm">Capture the entire scrollable page</p>
-              <Code>pre-post url1 url2 --full</Code>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-sm">
-                Output a markdown table for PR descriptions
-              </p>
-              <Code>pre-post url1 url2 --markdown</Code>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-sm">
-                Use existing images instead of capturing URLs
-              </p>
-              <Code>pre-post before.png after.png</Code>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-sm">Save to a custom location</p>
-              <Code>pre-post url1 url2 --output ./screenshots</Code>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-sm">
-                Upload to a custom image storage service
-              </p>
-              <Code>pre-post url1 url2 --upload-url my-s3-endpoint</Code>
-              <p className="text-sm mt-3">
-                By default, images are uploaded to{" "}
-                <a
-                  href="https://0x0.st"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-neutral-800 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 rounded-sm"
+          <section id="options" className="scroll-mt-8">
+            <details>
+              <summary className="text-neutral-800 cursor-pointer select-none list-none flex items-center gap-1.5 [&::-webkit-details-marker]:hidden">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-4 h-4 transition-transform [[open]>&]:rotate-90"
                 >
-                  0x0.st
-                </a>
-                . For heavy usage or sensitive captures, use your own upload
-                handler.
-              </p>
-            </div>
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+                Options
+              </summary>
+              <div className="mt-4 space-y-6">
+                <div className="space-y-2">
+                  <p className="text-sm">
+                    Capture responsive screenshots (desktop + mobile)
+                  </p>
+                  <Code>pre-post compare --before-base url1 --after-base url2 --responsive</Code>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm">
+                    Compare specific routes
+                  </p>
+                  <Code>pre-post compare --before-base url1 --after-base url2 --routes /dashboard,/settings</Code>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm">
+                    Capture a specific element using a CSS selector
+                  </p>
+                  <Code>pre-post url1 url2 &quot;.hero&quot;</Code>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm">
+                    Use different selectors for before and after
+                  </p>
+                  <Code>
+                    pre-post url1 url2 &quot;.old&quot; &quot;.new&quot;
+                  </Code>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm">
+                    Capture at mobile (375x812), tablet (768x1024), or custom
+                    viewport
+                  </p>
+                  <Code>pre-post url1 url2 --mobile</Code>
+                  <Code>pre-post url1 url2 --size 1920x1080</Code>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm">Capture the entire scrollable page</p>
+                  <Code>pre-post url1 url2 --full</Code>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm">
+                    Output a markdown table for PR descriptions
+                  </p>
+                  <Code>pre-post url1 url2 --markdown</Code>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm">
+                    Use existing images instead of capturing URLs
+                  </p>
+                  <Code>pre-post before.png after.png</Code>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm">Save to a custom location</p>
+                  <Code>pre-post url1 url2 --output ./screenshots</Code>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm">
+                    Upload to a custom image storage service
+                  </p>
+                  <Code>pre-post url1 url2 --upload-url my-s3-endpoint</Code>
+                  <p className="text-sm mt-3">
+                    By default, images are uploaded to{" "}
+                    <a
+                      href="https://0x0.st"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-neutral-800 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 rounded-sm"
+                    >
+                      0x0.st
+                    </a>
+                    . For heavy usage or sensitive captures, use your own upload
+                    handler.
+                  </p>
+                </div>
+              </div>
+            </details>
           </section>
         </div>
 
-        {/* Footer */}
-        <footer className="max-w-[540px] mx-auto px-4 sm:px-6 mt-10 sm:mt-16 pt-6 sm:pt-8 border-t border-neutral-100">
-          <p className="text-sm text-neutral-500 flex flex-col items-center gap-2 sm:flex-row sm:justify-between w-full">
-            <span className="inline-flex items-center gap-1.5">
-              Forked from{" "}
+        {/* Acknowledgements */}
+        <div className="max-w-[540px] mx-auto px-4 sm:px-6 mt-10 sm:mt-16 pt-6 sm:pt-8 border-t border-neutral-100">
+          <section className="space-y-1">
+            <p className="text-xs text-neutral-400">Acknowledgements</p>
+            <p className="text-xs text-neutral-400">
+              Built on{" "}
               <a
                 href="https://github.com/vercel-labs/before-and-after"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-neutral-800 hover:underline inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 rounded-sm"
+                className="text-neutral-500 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 rounded-sm"
               >
                 before-and-after
               </a>
@@ -227,31 +237,23 @@ export default function Page() {
                 href="https://x.com/jamesvclements"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-neutral-800 hover:underline inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 rounded-sm"
+                className="text-neutral-500 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 rounded-sm"
               >
-                <img
-                  src="https://avatars.githubusercontent.com/u/20052710?v=4"
-                  alt=""
-                  width={14}
-                  height={14}
-                  className="w-3.5 h-3.5 rounded-full"
-                />
                 James Clements
               </a>
-            </span>
-            <span>
-              Uses{" "}
+              {" "}at{" "}
               <a
-                href="https://playwright.dev"
+                href="https://github.com/vercel-labs"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-neutral-800 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 rounded-sm"
+                className="text-neutral-500 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 rounded-sm"
               >
-                Playwright
+                Vercel Labs
               </a>
-            </span>
-          </p>
-        </footer>
+              .
+            </p>
+          </section>
+        </div>
       </main>
     </div>
   );
