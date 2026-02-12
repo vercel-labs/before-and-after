@@ -15,15 +15,13 @@ export async function Code({ children, lang = 'bash', className = '' }: CodeProp
   })
 
   return (
-    <div className="relative -mr-4 sm:mr-0 w-fit max-w-[calc(100%+1rem)] sm:max-w-full">
+    <div className={`relative flex items-center border border-neutral-200 rounded-lg px-4 py-2.5 text-[13px] sm:text-[14px] ${className}`}>
       <div
-        className={`bg-neutral-50 rounded-lg px-2.5 sm:px-3 sm:pr-14 py-1.5 sm:py-2 text-[12px] sm:text-[14px] overflow-x-auto [&_pre]:!bg-transparent [&_pre]:!p-0 [&_pre]:!pr-11 sm:[&_pre]:!pr-0 [&_code]:!bg-transparent ${className}`}
+        className="flex-1 min-w-0 overflow-x-auto [&_pre]:!bg-transparent [&_pre]:!p-0 [&_code]:!bg-transparent [&_pre]:whitespace-pre [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-transparent hover:[&::-webkit-scrollbar-thumb]:bg-neutral-200 [&::-webkit-scrollbar-track]:bg-transparent"
         dangerouslySetInnerHTML={{ __html: html }}
       />
-      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
-        <div className="pointer-events-auto flex h-full items-center rounded-r-lg bg-gradient-to-l from-neutral-50 via-neutral-50/90 to-transparent pl-6 sm:pl-8 pr-2">
-          <CopyButton text={value} />
-        </div>
+      <div className="flex-shrink-0 ml-3">
+        <CopyButton text={value} />
       </div>
     </div>
   )

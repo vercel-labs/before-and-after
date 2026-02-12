@@ -17,8 +17,7 @@ function GitPullRequestIcon() {
   )
 }
 
-const AVATAR_URL = "https://avatars.githubusercontent.com/u/20052710?v=4"
-const USERNAME = "jamesvclements"
+const USERNAME = "juangabriel"
 
 interface PullRequestProps {
   tab?: "write" | "preview"
@@ -57,15 +56,6 @@ export function PullRequest({
 
   return (
     <div className={`w-full relative ${className ?? ""}`}>
-      {/* Avatar - positioned outside the component */}
-      <div className="absolute top-0 left-0 -translate-x-[calc(100%+8px)]">
-        <img
-          src={AVATAR_URL}
-          alt={USERNAME}
-          className="w-6 h-6 rounded-full"
-        />
-      </div>
-
       {/* Main content box */}
       <div className="w-full">
         {/* Top nav bar with username */}

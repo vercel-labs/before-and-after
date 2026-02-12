@@ -17,6 +17,11 @@ const ibmPlexMono = IBM_Plex_Mono({
   variable: "--font-mono",
 })
 
+const departureMono = localFont({
+  src: "./fonts/DepartureMono-Regular.woff2",
+  variable: "--font-departure",
+})
+
 const vanillaCream = localFont({
   src: "./fonts/VanillaCreamOx-Regular.otf",
   variable: "--font-vanilla-cream",
@@ -56,7 +61,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${ibmPlexSans.variable} ${ibmPlexMono.variable} ${vanillaCream.variable} ${biroScript.variable} font-sans antialiased`}>
+      <body className={`${ibmPlexSans.variable} ${ibmPlexMono.variable} ${departureMono.variable} ${vanillaCream.variable} ${biroScript.variable} font-sans antialiased`}>
         {children}
       </body>
     </html>

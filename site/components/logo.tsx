@@ -8,7 +8,7 @@ export function Logo({ className }: { className?: string }) {
         PRE
       </span>
       <span className="text-xs text-neutral-400 italic">vs</span>
-      <span className="relative font-medium text-xl leading-none">
+      <span className="relative font-[family-name:var(--font-departure)] text-xl leading-none uppercase">
         {/* top-left, larger */}
         <svg
           className="absolute -left-1 -top-1 w-2 h-2 text-neutral-400"

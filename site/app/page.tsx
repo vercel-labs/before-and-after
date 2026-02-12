@@ -4,10 +4,10 @@ import { Logo } from "@/components/logo";
 
 export default function Page() {
   return (
-    <div className="min-h-screen bg-[#F3F3F3] text-neutral-500">
+    <div className="min-h-screen bg-[#FBFBFB] text-neutral-500">
       <main className="py-10 sm:py-16">
         {/* Header - constrained width */}
-        <div className="max-w-[540px] mx-auto px-4 sm:px-6">
+        <div className="max-w-[640px] mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between mb-4">
             <a
               href="/pre-post"
@@ -17,7 +17,7 @@ export default function Page() {
                 <Logo />
               </h1>
             </a>
-            <nav className="flex items-center gap-2.5 sm:gap-4 text-[13px] sm:text-sm">
+            <nav className="flex items-center gap-2.5 sm:gap-4 text-[13px] sm:text-sm font-[family-name:var(--font-departure)]">
               <a
                 href="#install"
                 className="text-neutral-500 hover:text-neutral-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 rounded-sm"
@@ -71,9 +71,9 @@ export default function Page() {
         </div>
 
         {/* Content - constrained width */}
-        <div className="max-w-[540px] mx-auto px-4 sm:px-6 space-y-8 sm:space-y-10">
+        <div className="max-w-[640px] mx-auto px-4 sm:px-6 space-y-8 sm:space-y-10">
           <section className="space-y-3">
-            <h2 className="text-neutral-800">How it works</h2>
+            <h2 className="text-neutral-800 text-[14px] font-[family-name:var(--font-departure)] flex items-center gap-4 after:content-[''] after:flex-1 after:h-px after:bg-neutral-200">How it works</h2>
             <ol className="text-sm space-y-2 list-decimal list-inside">
               <li>Make your UI changes</li>
               <li>Say <code className="text-neutral-800 bg-neutral-50 px-1 sm:px-1.5 py-0.5 rounded font-mono text-[12px] sm:text-[14px]">/pre-post</code> in Claude Code</li>
@@ -88,7 +88,7 @@ export default function Page() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-neutral-800">What&apos;s different</h2>
+            <h2 className="text-neutral-800 text-[14px] font-[family-name:var(--font-departure)] flex items-center gap-4 after:content-[''] after:flex-1 after:h-px after:bg-neutral-200">What&apos;s different</h2>
             <p className="text-sm">
               Pre-post started as a fork of Vercel&apos;s{" "}
               <a
@@ -120,16 +120,14 @@ export default function Page() {
             </p>
           </section>
 
-          <hr className="border-neutral-100" />
-
           <section id="install" className="scroll-mt-8 space-y-3">
-            <h2 className="text-neutral-800">Install</h2>
+            <h2 className="text-neutral-800 text-[14px] font-[family-name:var(--font-departure)] flex items-center gap-4 after:content-[''] after:flex-1 after:h-px after:bg-neutral-200">Install</h2>
             <p className="text-sm">Install globally to use from anywhere</p>
             <Code>npm i -g pre-post</Code>
           </section>
 
           <section id="skill" className="scroll-mt-8 space-y-3">
-            <h2 className="text-neutral-800">Add Skill</h2>
+            <h2 className="text-neutral-800 text-[14px] font-[family-name:var(--font-departure)] flex items-center gap-4 after:content-[''] after:flex-1 after:h-px after:bg-neutral-200">Add Skill</h2>
             <p className="text-sm">
               Show Claude Code how and when to take before and afters. The skill
               uses{" "}
@@ -145,11 +143,9 @@ export default function Page() {
             <Code>npx skills add juangadm/pre-post</Code>
           </section>
 
-          <hr className="border-neutral-100" />
-
           <section id="options" className="scroll-mt-8">
             <details>
-              <summary className="text-neutral-800 cursor-pointer select-none list-none flex items-center gap-1.5 [&::-webkit-details-marker]:hidden">
+              <summary className="text-neutral-800 text-[14px] font-[family-name:var(--font-departure)] cursor-pointer select-none list-none flex items-center gap-1.5 after:content-[''] after:flex-1 after:h-px after:bg-neutral-200 [&::-webkit-details-marker]:hidden">
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
@@ -252,7 +248,7 @@ export default function Page() {
         </div>
 
         {/* Acknowledgements */}
-        <div className="max-w-[540px] mx-auto px-4 sm:px-6 mt-10 sm:mt-16 pt-6 sm:pt-8 border-t border-neutral-100">
+        <div className="max-w-[640px] mx-auto px-4 sm:px-6 mt-10 sm:mt-16 pt-6 sm:pt-8">
           <section className="space-y-1">
             <p className="text-xs text-neutral-400">Acknowledgements</p>
             <p className="text-xs text-neutral-400">

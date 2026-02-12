@@ -93,6 +93,11 @@ function ContentB() {
   )
 }
 
+const CONTENT_MAP: Record<string, () => React.JSX.Element> = {
+  A: ContentA,
+  B: ContentB,
+}
+
 export function Browser({ variant = "A", url, className }: BrowserProps) {
   const defaultUrl = variant === "A" ? "site.com" : "localhost:3000"
 
@@ -106,7 +111,7 @@ export function Browser({ variant = "A", url, className }: BrowserProps) {
     >
       <BrowserChrome url={url ?? defaultUrl} />
       <div className="bg-white" style={{ aspectRatio: "16 / 9" }}>
-        {variant === "A" ? <ContentA /> : <ContentB />}
+        {(CONTENT_MAP[variant ?? "A"] ?? ContentA)()}
       </div>
     </div>
   )
