@@ -16,6 +16,51 @@ Visual diff tool that captures before/after screenshots for PRs. Use it as a Cla
 | Skill orchestration | Basic capture | Full workflow: route detection, Claude refinement, user approval, PR posting |
 | Font/animation handling | None | Waits for `document.fonts.ready`, disables CSS animations |
 
+## How It Works
+
+```mermaid
+flowchart TD
+    A[pre-post] --> B{Mode?}
+
+    B -->|Manual| C["pre-post url1 url2"]
+    B -->|Automatic| D["pre-post run"]
+    B -->|Claude Code Skill| E["/pre-post"]
+
+    D --> F["git diff --name-only"]
+    F --> G{Detect framework}
+    G -->|Next.js App Router| H[Map files → routes]
+    G -->|Next.js Pages Router| H
+    G -->|Remix / SvelteKit| H
+    G -->|Unknown| I["Default to /"]
+    H --> J[Route list with confidence]
+
+    E --> F
+    E --> K[Claude refines routes]
+    K --> J
+
+    C --> L[Playwright]
+    J --> L
+
+    L --> M{System Chrome?}
+    M -->|Found| N[Use system Chrome]
+    M -->|Not found| O[Use bundled Chromium]
+    N --> P[Capture screenshots]
+    O --> P
+
+    P --> Q[Disable animations]
+    Q --> R[Wait for fonts]
+    R --> S[Take 2x retina screenshot]
+
+    S --> T{Output}
+    T -->|Default| U["Save to ~/Downloads"]
+    T -->|--markdown| V[Upload to 0x0.st]
+    V --> W[Markdown table for PR]
+
+    style A fill:#4f46e5,color:#fff
+    style L fill:#2563eb,color:#fff
+    style S fill:#059669,color:#fff
+```
+
 ## Prerequisites
 
 - **Node.js** 18+
