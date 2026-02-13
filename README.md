@@ -180,10 +180,10 @@ pre-post url1 url2 --output ./screenshots
 Override the default upload method:
 
 ```bash
-pre-post url1 url2 --upload my-s3-uploader
+pre-post url1 url2 --upload-url https://uploads.example.com
 ```
 
-By default, screenshots are committed directly to the PR branch (under `.pre-post/`) and served via `raw.githubusercontent.com`. Use `--upload` to override with a custom storage service. Screenshots auto-append to the PR body, newest on top.
+By default, screenshots are committed directly to the PR branch (under `.pre-post/`) and served via `raw.githubusercontent.com`. Use `--upload-url` to override with a custom storage service. Screenshots auto-append to the PR body, newest on top.
 
 ## Route Detection
 

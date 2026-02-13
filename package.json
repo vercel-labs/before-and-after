@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Visual diff tool for PRs — captures before/after screenshots of web pages",
   "author": "Juan Gabriel Delgado (forked from James Clements)",
-  "license": "PolyForm-Shield-1.0.0",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/juangadm/pre-post.git"
