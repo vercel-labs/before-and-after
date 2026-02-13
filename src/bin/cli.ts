@@ -204,8 +204,18 @@ async function runCompare(): Promise<void> {
 
           console.log(`Capturing ${route} @ ${preset} (${vp.width}x${vp.height})...`);
 
-          const beforeResult = await captureScreenshot({ url: beforeUrl, viewport: preset });
-          const afterResult = await captureScreenshot({ url: afterUrl, viewport: preset });
+          const beforeResult = await captureScreenshot({
+            url: beforeUrl,
+            viewport: preset,
+            fullPage: values.full,
+            selector: values.selector,
+          });
+          const afterResult = await captureScreenshot({
+            url: afterUrl,
+            viewport: preset,
+            fullPage: values.full,
+            selector: values.selector,
+          });
 
           const routeSlug = route === '/' ? 'home' : route.replace(/^\//, '').replace(/\//g, '-');
           const beforeFilename = `${routeSlug}-${preset}-before-${formatTimestamp(timestamp)}.png`;

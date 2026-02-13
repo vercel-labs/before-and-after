@@ -49,12 +49,12 @@ export async function captureScreenshot(
 ): Promise<Buffer> {
   const pg = await getPage(options.viewport);
 
+  await pg.goto(url, { waitUntil: 'networkidle' });
+
   // Disable animations and transitions for consistent captures
   await pg.addStyleTag({
     content: '*, *::before, *::after { animation-duration: 0s !important; transition-duration: 0s !important; }',
   });
-
-  await pg.goto(url, { waitUntil: 'networkidle' });
 
   // Wait for web fonts to finish loading
   await pg.evaluate(() => document.fonts.ready);
