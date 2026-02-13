@@ -11,40 +11,31 @@ import { detectAppRouterRoutes, detectPagesRouterRoutes } from './routes/nextjs.
 import { detectGenericRoutes } from './routes/generic.js';
 
 export type Framework = 'nextjs-app' | 'nextjs-pages' | 'generic';
+const FRAMEWORK_SCAN_DEPTH = 2;
+const SKIP_SCAN_DIRS = new Set([
+  '.git',
+  '.next',
+  '.turbo',
+  'node_modules',
+  'dist',
+  'build',
+  'coverage',
+]);
 
 /**
  * Get changed files from git diff.
  * Returns paths relative to the repo root.
  */
-export function getChangedFiles(diffTarget?: string): string[] {
+export function getChangedFiles(diffTarget?: string, cwd = process.cwd()): string[] {
   const target = diffTarget || 'HEAD';
-  try {
-    // Try diff against target (works for committed changes)
-    const output = execSync(`git diff --name-only ${target}`, {
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-    }).trim();
+  const files = new Set<string>();
 
-    if (output) return output.split('\n').filter(Boolean);
+  runGitNameOnly(`diff --name-only ${target}`, cwd).forEach((file) => files.add(file));
+  runGitNameOnly('diff --name-only --cached', cwd).forEach((file) => files.add(file));
+  runGitNameOnly('diff --name-only', cwd).forEach((file) => files.add(file));
+  runGitNameOnly('ls-files --others --exclude-standard', cwd).forEach((file) => files.add(file));
 
-    // Fall back to staged + unstaged changes
-    const staged = execSync('git diff --name-only --cached', {
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-    }).trim();
-
-    const unstaged = execSync('git diff --name-only', {
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-    }).trim();
-
-    const files = new Set<string>();
-    if (staged) staged.split('\n').filter(Boolean).forEach(f => files.add(f));
-    if (unstaged) unstaged.split('\n').filter(Boolean).forEach(f => files.add(f));
-    return Array.from(files);
-  } catch {
-    return [];
-  }
+  return Array.from(files);
 }
 
 /**
@@ -52,30 +43,14 @@ export function getChangedFiles(diffTarget?: string): string[] {
  */
 export function detectFramework(rootDir?: string): Framework {
   const dir = rootDir || process.cwd();
+  const candidateRoots = collectCandidateRoots(dir, FRAMEWORK_SCAN_DEPTH);
 
-  // Check for app/ directory with page.tsx files (Next.js App Router)
-  const appDir = path.join(dir, 'app');
-  if (fs.existsSync(appDir)) {
-    const hasPageFiles = fs.existsSync(path.join(appDir, 'page.tsx')) ||
-                         fs.existsSync(path.join(appDir, 'page.jsx')) ||
-                         fs.existsSync(path.join(appDir, 'page.ts')) ||
-                         fs.existsSync(path.join(appDir, 'page.js'));
-    if (hasPageFiles) return 'nextjs-app';
-
-    // Also check for layout.tsx (another strong App Router signal)
-    const hasLayout = fs.existsSync(path.join(appDir, 'layout.tsx')) ||
-                      fs.existsSync(path.join(appDir, 'layout.jsx'));
-    if (hasLayout) return 'nextjs-app';
+  for (const root of candidateRoots) {
+    if (hasNextAppRouter(root)) return 'nextjs-app';
   }
 
-  // Check for pages/ directory (Next.js Pages Router)
-  const pagesDir = path.join(dir, 'pages');
-  if (fs.existsSync(pagesDir)) {
-    const hasIndex = fs.existsSync(path.join(pagesDir, 'index.tsx')) ||
-                     fs.existsSync(path.join(pagesDir, 'index.jsx')) ||
-                     fs.existsSync(path.join(pagesDir, 'index.ts')) ||
-                     fs.existsSync(path.join(pagesDir, 'index.js'));
-    if (hasIndex) return 'nextjs-pages';
+  for (const root of candidateRoots) {
+    if (hasNextPagesRouter(root)) return 'nextjs-pages';
   }
 
   return 'generic';
@@ -141,4 +116,84 @@ function deduplicateRoutes(routes: DetectedRoute[]): DetectedRoute[] {
   }
 
   return Array.from(byPath.values());
+}
+
+function runGitNameOnly(command: string, cwd: string): string[] {
+  try {
+    const output = execSync(`git ${command}`, {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+      cwd,
+    }).trim();
+    return output ? output.split('\n').filter(Boolean) : [];
+  } catch {
+    return [];
+  }
+}
+
+function collectCandidateRoots(baseDir: string, maxDepth: number): string[] {
+  const roots = [baseDir];
+
+  function walk(dir: string, depth: number): void {
+    if (depth === 0) return;
+
+    let entries: fs.Dirent[];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      if (SKIP_SCAN_DIRS.has(entry.name)) continue;
+
+      const child = path.join(dir, entry.name);
+      roots.push(child);
+      walk(child, depth - 1);
+    }
+  }
+
+  walk(baseDir, maxDepth);
+  return roots;
+}
+
+function hasNextAppRouter(rootDir: string): boolean {
+  const appDir = path.join(rootDir, 'app');
+  if (!fs.existsSync(appDir)) return false;
+
+  return hasAnyFile(appDir, [
+    'page.tsx',
+    'page.ts',
+    'page.jsx',
+    'page.js',
+    'layout.tsx',
+    'layout.ts',
+    'layout.jsx',
+    'layout.js',
+  ]);
+}
+
+function hasNextPagesRouter(rootDir: string): boolean {
+  const pagesDir = path.join(rootDir, 'pages');
+  if (!fs.existsSync(pagesDir)) return false;
+
+  return hasAnyFile(pagesDir, [
+    'index.tsx',
+    'index.ts',
+    'index.jsx',
+    'index.js',
+    '_app.tsx',
+    '_app.ts',
+    '_app.jsx',
+    '_app.js',
+    '_document.tsx',
+    '_document.ts',
+    '_document.jsx',
+    '_document.js',
+  ]);
+}
+
+function hasAnyFile(dir: string, filenames: string[]): boolean {
+  return filenames.some((filename) => fs.existsSync(path.join(dir, filename)));
 }

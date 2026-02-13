@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { detectRoutes } from '../../src/routes';
+import { execSync } from 'child_process';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import { detectRoutes, detectFramework, getChangedFiles } from '../../src/routes';
 import { detectAppRouterRoutes, detectPagesRouterRoutes } from '../../src/routes/nextjs';
 import { detectGenericRoutes } from '../../src/routes/generic';
 
@@ -382,5 +386,46 @@ describe('detectRoutes', () => {
       { framework: 'nextjs-pages' }
     );
     expect(routes[0].path).toBe('/about');
+  });
+});
+
+describe('detectFramework', () => {
+  it('detects Next.js App Router from a nested app directory', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pre-post-framework-app-'));
+    try {
+      fs.mkdirSync(path.join(root, 'site', 'app'), { recursive: true });
+      fs.writeFileSync(path.join(root, 'site', 'app', 'page.tsx'), 'export default function Page() { return null; }');
+
+      expect(detectFramework(root)).toBe('nextjs-app');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('detects Next.js Pages Router from a nested pages directory', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pre-post-framework-pages-'));
+    try {
+      fs.mkdirSync(path.join(root, 'apps', 'web', 'pages'), { recursive: true });
+      fs.writeFileSync(path.join(root, 'apps', 'web', 'pages', 'index.tsx'), 'export default function Page() { return null; }');
+
+      expect(detectFramework(root)).toBe('nextjs-pages');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('getChangedFiles', () => {
+  it('includes untracked files even when HEAD diff is unavailable', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pre-post-changed-files-'));
+    try {
+      execSync('git init', { cwd: root, stdio: 'pipe' });
+      fs.writeFileSync(path.join(root, 'new-component.tsx'), 'export const NewComponent = () => null;');
+
+      const files = getChangedFiles(undefined, root);
+      expect(files).toContain('new-component.tsx');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
   });
 });
