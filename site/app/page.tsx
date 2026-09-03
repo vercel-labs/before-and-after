@@ -19,6 +19,14 @@ export default function Page() {
             <nav className="flex items-center gap-3 text-[13px] sm:text-sm">
               <span className="font-mono text-[11px] font-medium text-neutral-900">v0.1.0</span>
               <a
+                href="https://jm.sv"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-neutral-500 hover:text-neutral-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 rounded-sm"
+              >
+                jm.sv
+              </a>
+              <a
                 href="https://github.com/vercel-labs/before-and-after"
                 target="_blank"
                 rel="noopener noreferrer"
