@@ -9,7 +9,7 @@ Browser work belongs to [agent-browser](https://agentbrowser.dev) and its bundle
 ## Install
 
 ```bash
-npx skills add vercel-labs/before-and-after#main
+npx skills add "vercel-labs/before-and-after#main"
 ```
 
 Requires `agent-browser` and GitHub CLI 2.99+ (for `gh --attach`).

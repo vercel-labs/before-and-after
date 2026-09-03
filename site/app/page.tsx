@@ -48,7 +48,7 @@ export default function Page() {
               Teach coding agents to show their work with before and after screenshots and video. Access protected
               preview deployments and format every capture for GitHub.
             </p>
-            <Code>npx skills add vercel-labs/before-and-after#main</Code>
+            <Code>npx skills add "vercel-labs/before-and-after#main"</Code>
           </div>
         </div>
 
