@@ -5,8 +5,9 @@
  * deterministic attachment markup and marker replacement contract.
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { extname, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 
 export const MARKER_START = "<!-- before-and-after:start -->";
@@ -23,8 +24,9 @@ export function mediaKind(file) {
 }
 
 export function localRef(file, cwd = process.cwd()) {
-  const path = relative(cwd, resolve(cwd, file));
-  if (path === ".." || path.startsWith(`..${process.platform === "win32" ? "\\" : "/"}`)) {
+  const native = relative(cwd, resolve(cwd, file));
+  const path = process.platform === "win32" ? native.replaceAll("\\", "/") : native;
+  if (path === ".." || path.startsWith("../")) {
     throw new Error(`Media files must be inside the working directory: "${file}"`);
   }
   const ref = path.startsWith(".") ? path : `./${path}`;
@@ -205,7 +207,16 @@ function main(argv) {
   }
 }
 
-if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split("/").at(-1))) {
+function isDirectRun() {
+  if (!process.argv[1]) return false;
+  try {
+    return realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+}
+
+if (isDirectRun()) {
   try {
     main(process.argv.slice(2));
   } catch (error) {
