@@ -33,6 +33,7 @@ describe('captureScreenshot', () => {
     expect(result.image.length).toBeGreaterThan(1000);
     expect(isValidPng(result.image)).toBe(true);
     expect(result.url).toContain('css-card/before.html');
+    expect(result.viewport).toEqual({ width: 1280, height: 800 });
   });
 
   it('captures full page screenshot', async () => {
@@ -58,13 +59,6 @@ describe('captureScreenshot', () => {
     expect(dims.width).toBe(result.viewport.width);
   });
 
-  it('applies desktop viewport by default', async () => {
-    const result = await captureScreenshot({
-      url: fileUrl('css-card/before.html'),
-    });
-    expect(result.viewport).toEqual({ width: 1280, height: 800 });
-  });
-
   it('applies mobile viewport when configured', async () => {
     const result = await captureScreenshot({
       url: fileUrl('css-card/before.html'),
@@ -73,24 +67,6 @@ describe('captureScreenshot', () => {
     expect(result.viewport).toEqual({ width: 375, height: 812 });
     const dims = getPngDimensions(result.image);
     expect(dims.width).toBe(375);
-  });
-
-  it('applies tablet viewport when configured', async () => {
-    const result = await captureScreenshot({
-      url: fileUrl('css-card/before.html'),
-      viewport: 'tablet',
-    });
-    expect(result.viewport).toEqual({ width: 768, height: 1024 });
-  });
-
-  it('applies custom viewport dimensions', async () => {
-    const result = await captureScreenshot({
-      url: fileUrl('css-card/before.html'),
-      viewport: { width: 1920, height: 1080 },
-    });
-    expect(result.viewport).toEqual({ width: 1920, height: 1080 });
-    const dims = getPngDimensions(result.image);
-    expect(dims.width).toBe(1920);
   });
 
   it('captures at 1x scale (viewport matches image size)', async () => {

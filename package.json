@@ -1,6 +1,6 @@
 {
   "name": "@vercel/before-and-after",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Simple before/after screenshot tool for capturing and comparing web pages",
   "author": "James Clements",
   "license": "PolyForm-Shield-1.0.0",

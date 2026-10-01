@@ -5,7 +5,16 @@ export function resolveViewport(config?: ViewportConfig): ViewportSize {
     return VIEWPORT_PRESETS.desktop;
   }
   if (typeof config === 'string') {
-    return VIEWPORT_PRESETS[config as ViewportPreset];
+    const preset = VIEWPORT_PRESETS[config as ViewportPreset];
+    if (!preset) {
+      throw new TypeError(`Unknown viewport preset: ${config}`);
+    }
+    return preset;
+  }
+
+  const dimensions = [config.width, config.height];
+  if (!dimensions.every((value) => Number.isInteger(value) && value >= 1 && value <= 10_000)) {
+    throw new TypeError('Viewport dimensions must be integers between 1 and 10000');
   }
   return config;
 }
