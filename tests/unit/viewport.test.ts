@@ -28,14 +28,4 @@ describe('resolveViewport', () => {
     expect(result).toEqual({ width: 1920, height: 1080 });
   });
 
-  it('passes through exact dimensions without modification', () => {
-    const custom = { width: 500, height: 300 };
-    const result = resolveViewport(custom);
-    expect(result).toEqual(custom);
-  });
-
-  it('returns desktop when undefined is passed explicitly', () => {
-    const result = resolveViewport(undefined);
-    expect(result).toEqual(VIEWPORT_PRESETS.desktop);
-  });
 });

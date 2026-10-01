@@ -3,18 +3,27 @@
  * Requires agent-browser to be installed globally.
  */
 
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { ViewportSize } from './types.js';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
-function exec(cmd: string): string {
+function exec(...args: string[]): string {
   try {
-    return execSync(cmd, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+    return execFileSync('agent-browser', args, {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    }).trim();
   } catch (error) {
     const err = error as { stderr?: string; message?: string };
     throw new Error(err.stderr || err.message || 'Command failed');
+  }
+}
+
+function assertString(value: unknown, name: string): asserts value is string {
+  if (typeof value !== 'string') {
+    throw new TypeError(`${name} must be a string`);
   }
 }
 
@@ -32,20 +41,37 @@ export async function captureScreenshot(
   url: string,
   options: ScreenshotOptions
 ): Promise<Buffer> {
+  assertString(url, 'URL');
+
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(url);
+  } catch {
+    throw new TypeError(`Invalid URL: ${url}`);
+  }
+
+  if (!['http:', 'https:', 'file:'].includes(parsedUrl.protocol)) {
+    throw new TypeError(`Unsupported URL protocol: ${parsedUrl.protocol}`);
+  }
+
+  if (options.selector !== undefined) {
+    assertString(options.selector, 'Selector');
+  }
+
   // Set viewport
-  exec(`agent-browser set viewport ${options.viewport.width} ${options.viewport.height}`);
+  exec('set', 'viewport', String(options.viewport.width), String(options.viewport.height));
 
   // Navigate to URL
-  exec(`agent-browser open "${url}"`);
+  exec('open', url);
 
   // Wait for page to settle (fonts, JS rendering)
-  exec('agent-browser wait 500');
+  exec('wait', '500');
 
   // If selector specified, scroll it into view
   if (options.selector) {
     try {
-      exec(`agent-browser scrollintoview "${options.selector}"`);
-      exec('agent-browser wait 200');
+      exec('scrollintoview', options.selector);
+      exec('wait', '200');
     } catch {
       throw new Error(`Element not found: ${options.selector}`);
     }
@@ -53,8 +79,7 @@ export async function captureScreenshot(
 
   // Take screenshot to temp file
   const tempFile = path.join(os.tmpdir(), `screenshot-${Date.now()}.png`);
-  const fullFlag = options.fullPage ? '--full' : '';
-  exec(`agent-browser screenshot ${fullFlag} "${tempFile}"`);
+  exec('screenshot', ...(options.fullPage ? ['--full'] : []), tempFile);
 
   // Read and return buffer
   const buffer = fs.readFileSync(tempFile);
@@ -68,7 +93,7 @@ export async function captureScreenshot(
  */
 export function closeBrowser(): void {
   try {
-    exec('agent-browser close');
+    exec('close');
   } catch {
     // Ignore errors if browser wasn't open
   }
